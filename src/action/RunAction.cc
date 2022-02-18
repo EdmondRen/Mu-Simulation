@@ -109,6 +109,7 @@ RunAction::RunAction(const std::string& data_dir) : G4UserRunAction() {
 //__Run Initialization__________________________________________________________________________
 void RunAction::BeginOfRunAction(const G4Run* run) {
   G4AutoLock lock(&_mutex);
+//Place functions within the brackets below if you only want them to run once, or they will run on every worker thread and again at the end
   if (!G4Threading::IsWorkerThread()) {
     if (_prefix.find("/run") == std::string::npos)
       _prefix = _make_directories(_data_dir) + "/run";
@@ -138,6 +139,7 @@ void RunAction::EndOfRunAction(const G4Run*) {
   Analysis::ROOT::Save();
 
   G4AutoLock lock(&_mutex);
+//Place functions within the brackets below if you only want them to run once, or they will run on every worker thread and again at the end
   if (!G4Threading::IsWorkerThread()) {
     if (util::io::path_exists(_path))
       return;
@@ -176,6 +178,7 @@ void RunAction::EndOfRunAction(const G4Run*) {
       ++_run_count;
       std::cout << "\n\n\nEnd of Run\nData File: " << _path << "\n\n";
     }
+	  
   }
   lock.unlock();
   _prefix_loaded = false;
