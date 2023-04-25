@@ -100,10 +100,11 @@ constexpr auto steel_height = 0.03*m;
 
 constexpr auto air_gap = 30*m;
 
-constexpr auto scintillator_casing_thickness = 0.005*m;
+constexpr auto scintillator_casing_thickness = 0.003*m;
 
 constexpr auto layer_spacing = 1.0*m;
-constexpr auto layer_count   = 7UL;
+constexpr auto layer_spacing_top = 0.8*m; // Top layers have different spacing
+constexpr auto layer_count   = 8UL;
 
 constexpr auto module_x_edge_length = 9.0*m;
 constexpr auto module_y_edge_length = 9.0*m;
@@ -115,13 +116,13 @@ constexpr auto x_edge_increase = 2*full_layer_height + 4*wall_gap;
 
 constexpr auto layer_w_case = full_layer_height;
 
-constexpr auto full_module_height =  (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 5.0*layer_w_case + 4.0*layer_spacing;
+constexpr auto full_module_height =  (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 6.0*layer_w_case + 5.0*layer_spacing_top;
 
 constexpr auto scintillator_z_position = 0.00;
 
 constexpr auto wall_height = 20*m;
 
-constexpr int NBEAMLAYERS = 7;
+constexpr int NBEAMLAYERS = 8;
 constexpr auto beam_x_edge_length = 0.10*m;
 constexpr auto beam_y_edge_length = 0.10*m;
 constexpr auto beam_thickness = 0.02*m;
@@ -129,21 +130,24 @@ constexpr auto beam_thickness = 0.02*m;
 constexpr auto full_detector_height = full_module_height + steel_height + 3.0*layer_w_case + 2.0*layer_spacing;
 constexpr auto half_detector_height = 0.5L * full_detector_height;
 
-constexpr double layer_z_displacement[7] = {-0.5*full_module_height + (20.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 0.5*layer_w_case,
+constexpr double layer_z_displacement[8] = {-0.5*full_module_height + (20.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 0.5*layer_w_case,
 											-0.5*full_module_height + (20.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + layer_spacing + 1.5*layer_w_case,
 											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 0.5*layer_w_case,
-											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + layer_spacing + 1.5*layer_w_case,
-											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 2*layer_spacing + 2.5*layer_w_case,
-											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 3*layer_spacing + 3.5*layer_w_case,
-											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 4*layer_spacing + 4.5*layer_w_case};
+											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + layer_spacing_top + 1.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 2*layer_spacing_top + 2.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 3*layer_spacing_top + 3.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 4*layer_spacing_top + 4.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 5*layer_spacing_top + 5.5*layer_w_case};
 
-constexpr double module_beam_heights[7] = {20.0*m - 3*layer_w_case - 2*layer_spacing,
+
+constexpr double module_beam_heights[8] = {20.0*m - 3*layer_w_case - 2*layer_spacing,
 										   layer_spacing,
 										   5.0*m - 2*layer_w_case - layer_spacing,
-										   layer_spacing,
-										   layer_spacing,
-										   layer_spacing,
-										   layer_spacing};
+										   layer_spacing_top,
+										   layer_spacing_top,
+										   layer_spacing_top,
+										   layer_spacing_top,
+										   layer_spacing_top};
 
 	// constexpr double module_beam_z_pos[9] = {-0.50*full_module_height + 0.50*module_beam_heights[0] + layer_w_case,
 	//                                          -0.50*full_module_height + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[1],
@@ -155,13 +159,14 @@ constexpr double module_beam_heights[7] = {20.0*m - 3*layer_w_case - 2*layer_spa
 	//                                          -0.50*full_module_height + 25.0*m + 3*layer_w_case + 2*layer_spacing + 0.50*module_beam_heights[7],
 	//                                          -0.50*full_module_height + 25.0*m + 4*layer_w_case + 3*layer_spacing + 0.50*module_beam_heights[8]};
 
-constexpr double module_beam_z_pos[7] = {-0.50*full_module_height + 0.50*module_beam_heights[0],
+constexpr double module_beam_z_pos[8] = {-0.50*full_module_height + 0.50*module_beam_heights[0],
 										 -0.50*full_module_height + (20.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + layer_w_case + 0.50*module_beam_heights[1],
 										 -0.50*full_module_height + (20.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[2],
 										 -0.50*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + layer_w_case + 0.50*module_beam_heights[3],
-										 -0.50*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[4],
-										 -0.50*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 3*layer_w_case + 2*layer_spacing + 0.50*module_beam_heights[5],
-										 -0.50*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 4*layer_w_case + 3*layer_spacing + 0.50*module_beam_heights[6]};
+										 -0.50*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 2*layer_w_case + 1*layer_spacing_top + 0.50*module_beam_heights[4],
+										 -0.50*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 3*layer_w_case + 2*layer_spacing_top + 0.50*module_beam_heights[5],
+										 -0.50*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 4*layer_w_case + 3*layer_spacing_top + 0.50*module_beam_heights[6],
+										 -0.50*full_module_height + (25.0*m - 3.0*layer_w_case - 2.0*layer_spacing) + 5*layer_w_case + 3*layer_spacing_top + 0.50*module_beam_heights[7]};
 
 
 
@@ -211,6 +216,13 @@ Detector::Detector() : G4VSensitiveDetector("MATHUSLA/MU/Box") {
   collectionName.insert("Box_HC");
   for (auto& scintillator : _scintillators)
     scintillator->Register(this);
+
+    // Print out the detector dislacement in z direction
+  std::cout<<"Layer z displacement:\n \n"<<std::endl;
+  for (auto& layer_y : layer_z_displacement)
+      std::cout<< "y = "<<layer_y -(-0.5*full_module_height + 20*m - 3.0*layer_w_case - 2.0*layer_spacing) +  8550*cm <<std::endl;
+  std::cout<<"----------------------\n \n"<<std::endl;
+
 }
 //----------------------------------------------------------------------------------------------
 
