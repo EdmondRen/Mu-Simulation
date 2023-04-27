@@ -559,9 +559,9 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 	// pre_data->Branch("Y_H", &Y_POS_HIT, "Y_H/D");
 
 	auto DetectorVolume = Construction::BoxVolume("Box", x_edge_length + x_edge_increase, y_edge_length, full_detector_height,
-												  Construction::Material::Air, G4VisAttributes::Invisible);
+												  Construction::Material::Air, G4VisAttributes::GetInvisible());
 
-	//DetectorVolume->SetVisAttributes(G4VisAttributes::Invisible);
+	//DetectorVolume->SetVisAttributes(G4VisAttributes::GetInvisible();
 
 	for (int module_number = 0; module_number < NMODULES; module_number++){
 		auto current = Detector::ConstructModule(DetectorVolume, module_number,
@@ -772,7 +772,7 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 	// auto CMS_Detector_logical = CMSRingVolume();
 	// auto UXC_55_air_v1 = new G4SubtractionSolid("UXC_55_air_v1", UXC_55_cavern_solid, UXC55_outer_solid);
 	// auto UXC_55_air_v2 = new G4SubtractionSolid("UXC_55_air_v2", UXC_55_air_v1, CMS_Detector_logical->GetSolid());
-	// auto UXC55_air_logical = Volume("UXC55_air", UXC_55_air_v2, Construction::Material::Air, G4VisAttributes::Invisible);
+	// auto UXC55_air_logical = Volume("UXC55_air", UXC_55_air_v2, Construction::Material::Air, G4VisAttributes::GetInvisible());
 
 	// Construction::PlaceVolume(UXC55_outer_logical, earth, Cavern_Transform()*Construction::Rotate(0, 1, 0, 90*deg) );
 	// Construction::PlaceVolume(CMS_Detector_logical, earth, Cavern_Transform()*Construction::Rotate(0, 1, 0, 90*deg) );
@@ -796,7 +796,7 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 	// 								  AS_Depth - 2* AS_Thickness,
 	// 								  AS_Height - 2* AS_Thickness,
 	// 								  Construction::Material::Air,
-	// 								  G4VisAttributes::Invisible);
+	// 								  G4VisAttributes::GetInvisible());
 
 	// Construction::PlaceVolume(Access_Shaft_outer_logical, earth, Access_Shaft_Transform() );
 	// Construction::PlaceVolume(Access_Shaft_Air, earth, Access_Shaft_Transform());
