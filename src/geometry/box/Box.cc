@@ -16,7 +16,11 @@
 #include "TTree.h"
 #include "MuonDataController.hh"
 
+#include <iostream>
+#include <string>
+#include <fstream>
 
+#define UNUSED(x) (void)(x)
 using dimension = double;
 
 namespace MATHUSLA { namespace MU {
@@ -102,7 +106,7 @@ constexpr auto air_gap = 30*m;
 
 constexpr auto scintillator_casing_thickness = 0.003*m;
 
-constexpr auto layer_spacing = 1.0*m;
+constexpr auto layer_spacing = 0.8*m;
 constexpr auto layer_spacing_top = 0.8*m; // Top layers have different spacing
 constexpr auto layer_count   = 8UL;
 
@@ -130,8 +134,8 @@ constexpr auto beam_thickness = 0.02*m;
 constexpr auto full_detector_height = full_module_height + steel_height + 2.0*layer_w_case + 1.0*layer_spacing;
 constexpr auto half_detector_height = 0.5L * full_detector_height;
 
-constexpr double layer_z_displacement[8] = {-0.5*full_module_height + (19.0*m ) + 0.5*layer_w_case,
-											-0.5*full_module_height + (19.0*m ) + layer_spacing + 1.5*layer_w_case,
+constexpr double layer_z_displacement[8] = {-0.5*full_module_height + (25.0*m -5.0*m - layer_spacing - 2*layer_w_case) + 0.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m -5.0*m - layer_spacing - 2*layer_w_case) + layer_spacing + 1.5*layer_w_case,
 											-0.5*full_module_height + (25.0*m ) + 0.5*layer_w_case,
 											-0.5*full_module_height + (25.0*m ) + layer_spacing_top + 1.5*layer_w_case,
 											-0.5*full_module_height + (25.0*m ) + 2*layer_spacing_top + 2.5*layer_w_case,
@@ -139,23 +143,25 @@ constexpr double layer_z_displacement[8] = {-0.5*full_module_height + (19.0*m ) 
 											-0.5*full_module_height + (25.0*m ) + 4*layer_spacing_top + 4.5*layer_w_case,
 											-0.5*full_module_height + (25.0*m ) + 5*layer_spacing_top + 5.5*layer_w_case};
 
+// The z distance from the TOP of the floor layer to the BOTTOM of the middle layer
+constexpr double floor_z_top = 25.0*m -5.0*m - layer_spacing - 2*layer_w_case;
 // The z coordinates of the BOTTOM of all layers in the world
-constexpr double layer_z_world[10] = {19*m+layer_spacing+2.*layer_w_case,
-                                      19*m+layer_w_case,
-                                      -(layer_z_displacement[0]+0.5*full_module_height-19*m-0.5*layer_w_case),
-                                      -(layer_z_displacement[1]+0.5*full_module_height-19*m-0.5*layer_w_case),
-                                      -(layer_z_displacement[2]+0.5*full_module_height-19*m-0.5*layer_w_case),
-                                      -(layer_z_displacement[3]+0.5*full_module_height-19*m-0.5*layer_w_case),
-                                      -(layer_z_displacement[4]+0.5*full_module_height-19*m-0.5*layer_w_case),
-                                      -(layer_z_displacement[5]+0.5*full_module_height-19*m-0.5*layer_w_case),
-                                      -(layer_z_displacement[6]+0.5*full_module_height-19*m-0.5*layer_w_case),
-                                      -(layer_z_displacement[7]+0.5*full_module_height-19*m-0.5*layer_w_case)
+constexpr double layer_z_world[10] = {floor_z_top +layer_spacing+2.*layer_w_case,
+                                      floor_z_top +layer_w_case,
+                                      -(layer_z_displacement[0]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[1]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[2]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[3]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[4]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[5]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[6]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[7]+0.5*full_module_height-floor_z_top-0.5*layer_w_case)
 };                      
 
 
-constexpr double module_beam_heights[8] = {20.0*m,
+constexpr double module_beam_heights[8] = {floor_z_top,
 										   layer_spacing,
-										   6.0*m - 2*layer_w_case - layer_spacing,
+										   5.0*m,
 										   layer_spacing_top,
 										   layer_spacing_top,
 										   layer_spacing_top,
@@ -173,13 +179,13 @@ constexpr double module_beam_heights[8] = {20.0*m,
 	//                                          -0.50*full_module_height + 25.0*m + 4*layer_w_case + 3*layer_spacing + 0.50*module_beam_heights[8]};
 
 constexpr double module_beam_z_pos[8] = {-0.50*full_module_height + 0.50*module_beam_heights[0],
-										 -0.50*full_module_height + 20.0*m  + layer_w_case + 0.50*module_beam_heights[1],
-										 -0.50*full_module_height + 20.0*m  + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[2],
+										 -0.50*full_module_height + floor_z_top  + layer_w_case + 0.50*module_beam_heights[1],
+										 -0.50*full_module_height + floor_z_top  + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[2],
 										 -0.50*full_module_height + 25.0*m  + layer_w_case + 0.50*module_beam_heights[3],
 										 -0.50*full_module_height + 25.0*m  + 2*layer_w_case + 1*layer_spacing_top + 0.50*module_beam_heights[4],
 										 -0.50*full_module_height + 25.0*m  + 3*layer_w_case + 2*layer_spacing_top + 0.50*module_beam_heights[5],
 										 -0.50*full_module_height + 25.0*m  + 4*layer_w_case + 3*layer_spacing_top + 0.50*module_beam_heights[6],
-										 -0.50*full_module_height + 25.0*m  + 5*layer_w_case + 3*layer_spacing_top + 0.50*module_beam_heights[7]};
+										 -0.50*full_module_height + 25.0*m  + 5*layer_w_case + 4*layer_spacing_top + 0.50*module_beam_heights[7]};
 
 
 
@@ -231,13 +237,38 @@ Detector::Detector() : G4VSensitiveDetector("MATHUSLA/MU/Box") {
     scintillator->Register(this);
 
     // Print out the detector dislacement in z direction
-  std::cout<<"Layer z displacement [mm]:\n   world coord.---- CMS coord.\n"<<std::endl;
+  std::cout<<"Layer z displacement [cm]:\n   world coord.---- CMS coord.\n"<<std::endl;
   for (auto& layer_y : layer_z_world)
-      std::cout<< "y =  "<<layer_y <<",  "<<  -layer_y+Box_IP_Depth <<std::endl;
+      std::cout<< "y =  "<<layer_y/Units::Length<<",\t\t"<<  (-layer_y+Box_IP_Depth)/Units::Length <<std::endl;
   std::cout<<"----------------------\n \n"<<std::endl;
+
+  // std::string prefix = ".";
+  // Detector::SaveInfo(prefix);
 
 }
 //----------------------------------------------------------------------------------------------
+
+//__Detector Constructor________________________________________________________________________
+void Detector::SaveInfo(std::string & prefix){
+  //open file for writing
+  std::cout<<"Save infomration at: "<< prefix+"_SimInfo.txt" <<std::endl;
+  std::ofstream fw(prefix+"_SimInfo.txt", std::ofstream::out);
+
+  //check if file was successfully opened for writing
+  if (fw.is_open())
+  {
+    //store array contents to text fill
+    for (auto& layer_y : layer_z_world)
+      fw<< '[' << (-layer_y+Box_IP_Depth+scintillator_casing_thickness)/Units::Length << ", "<<  (-layer_y+Box_IP_Depth+scintillator_casing_thickness+scintillator_height)/Units::Length<< "]\n";
+    fw.close();
+  }
+  else std::cout << "Problem with opening file";
+  fw.close();  
+}
+
+//----------------------------------------------------------------------------------------------
+
+
 
 //__Initalize Event_____________________________________________________________________________
 void Detector::Initialize(G4HCofThisEvent* event) {
@@ -339,8 +370,8 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
   }
 
   int _rotation = (1UL + y_index) % 2;
-  size_t x_index;
-  size_t z_index;
+  size_t x_index = 0;
+  size_t z_index = 0;
 
   if (_rotation == 0){
 
@@ -514,6 +545,9 @@ G4VPhysicalVolume* Detector::ConstructScintillatorLayer(G4LogicalVolume* ModuleV
 
       _scintillators.push_back(current);
 
+      UNUSED(module_x_displacement);
+      UNUSED(module_y_displacement);
+
   return current->PlaceIn(ModuleVolume, G4Translate3D(0.0, 0.0, layer_z_displacement) );
   //G4Translate3D(0.5*layer_x_edge_length, 0.5*layer_y_edge_length, layer_z_displacement)
 }
@@ -533,7 +567,12 @@ G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, in
 															0*m,
 															0*m,
 															get_layer_z_displacement(layer));
+    UNUSED(current);
 	}
+
+  UNUSED(detector_x);
+  UNUSED(detector_y);
+  UNUSED(detector_z);
 
 	//CONSTRUCTING AND INSERTING STEEL BEAMS
 
@@ -587,15 +626,15 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 	// pre_data->Branch("Y_H", &Y_POS_HIT, "Y_H/D");
 
 	auto DetectorVolume = Construction::BoxVolume("Box", x_edge_length + x_edge_increase, y_edge_length, full_detector_height,
-												  Construction::Material::Air, G4VisAttributes::Invisible);
+												  Construction::Material::Air, G4VisAttributes::GetInvisible());
 
 	//DetectorVolume->SetVisAttributes(G4VisAttributes::Invisible);
 
 	for (int module_number = 0; module_number < NMODULES; module_number++){
-		auto current = Detector::ConstructModule(DetectorVolume, module_number,
-					   0.5L*x_edge_length + x_displacement, //add extra terms for displacement from center here
-					   0.5L*y_edge_length + y_displacement,
-					   -half_detector_height + steel_height + 3.0*layer_w_case + 2.0*layer_spacing);
+		Detector::ConstructModule(DetectorVolume, module_number,
+					   0.5L, //These arguments are not actually used
+					   0.5L,
+					   0.0L);
 	}
 
     auto first_hermetic_floor = new Scintillator("HF1",
@@ -639,7 +678,7 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 	//	Construction::Export(DetectorVolume, folder, file, arg4 );
 
 	return Construction::PlaceVolume(DetectorVolume, world,
-		   Construction::Transform(0.5L*x_edge_length + x_displacement, 0.5L*y_edge_length + y_displacement, -0.50*full_detector_height + 19*m + layer_spacing + 2.*layer_w_case + steel_height));
+		   Construction::Transform(0.5L*x_edge_length + x_displacement, 0.5L*y_edge_length + y_displacement, -0.50*full_detector_height + floor_z_top + layer_spacing + 2.*layer_w_case + steel_height));
 
 }
 
@@ -790,7 +829,7 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 	auto CMS_Detector_logical = CMSRingVolume();
 	auto UXC_55_air_v1 = new G4SubtractionSolid("UXC_55_air_v1", UXC_55_cavern_solid, UXC55_outer_solid);
 	auto UXC_55_air_v2 = new G4SubtractionSolid("UXC_55_air_v2", UXC_55_air_v1, CMS_Detector_logical->GetSolid());
-	auto UXC55_air_logical = Volume("UXC55_air", UXC_55_air_v2, Construction::Material::Air, G4VisAttributes::Invisible);
+	auto UXC55_air_logical = Volume("UXC55_air", UXC_55_air_v2, Construction::Material::Air, G4VisAttributes::GetInvisible());
 
 	Construction::PlaceVolume(UXC55_outer_logical, earth, Cavern_Transform()*Construction::Rotate(0, 1, 0, 90*deg) );
 	Construction::PlaceVolume(CMS_Detector_logical, earth, Cavern_Transform()*Construction::Rotate(0, 1, 0, 90*deg) );
@@ -814,7 +853,7 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 									  AS_Depth - 2* AS_Thickness,
 									  AS_Height - 2* AS_Thickness,
 									  Construction::Material::Air,
-									  G4VisAttributes::Invisible);
+									  G4VisAttributes::GetInvisible());
 
 	Construction::PlaceVolume(Access_Shaft_outer_logical, earth, Access_Shaft_Transform() );
 	Construction::PlaceVolume(Access_Shaft_Air, earth, Access_Shaft_Transform());
