@@ -125,6 +125,8 @@ void RunAction::BeginOfRunAction(const G4Run* run) {
     Construction::Builder::GetDetectorDataKeys(),
     Construction::Builder::GetDetectorDataKeyTypes());
 
+Construction::Builder::SaveInfo(_prefix);
+
   if (!G4Threading::IsWorkerThread())
     std::cout << "\n\n";
 }

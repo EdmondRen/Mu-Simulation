@@ -87,6 +87,7 @@ public:
   static bool SaveAll;
 
   static void WritePreData();
+  static void SaveInfo(std::string & prefix);
 };
 
 } /* namespace Box */ //////////////////////////////////////////////////////////////////////////

@@ -284,6 +284,15 @@ void Builder::SetSaveOption(bool save_option, bool cut_save_option) {
 }
 //----------------------------------------------------------------------------------------------
 
+//__Save some information in a txt file____________________________________________________________
+void Builder::SaveInfo(std::string & prefix){
+  if (_detector == "Flat") {;}
+  else if (_detector == "Box") {
+    Box::Detector::SaveInfo(prefix);
+  } 
+}
+//----------------------------------------------------------------------------------------------
+
 //__Get Current Detector Name___________________________________________________________________
 const std::string& Builder::GetDetectorName() {
   return _detector;

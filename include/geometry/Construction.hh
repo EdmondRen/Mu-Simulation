@@ -62,6 +62,8 @@ public:
 
   static void SetDetector(const std::string& detector);
   static void SetSaveOption(const bool save_option, const bool cut_save_option);
+  
+  static void SaveInfo(std::string&  prefix);
 
   static const std::string& GetDetectorName();
   static bool IsDetectorDataPerEvent();
