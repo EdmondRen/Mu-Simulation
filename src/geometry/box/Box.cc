@@ -259,7 +259,7 @@ void Detector::SaveInfo(std::string & prefix){
   {
     //store array contents to text fill
     for (auto& layer_y : layer_z_world)
-      fw<< '[' << (-layer_y+Box_IP_Depth+scintillator_casing_thickness)/Units::Length << ", "<<  (-layer_y+Box_IP_Depth+scintillator_casing_thickness+scintillator_height)/Units::Length<< "]\n";
+      fw<< '[' << (-layer_y+Box_IP_Depth)/Units::Length << ", "<<  (-layer_y+Box_IP_Depth+2*scintillator_casing_thickness+scintillator_height)/Units::Length<< "]\n";
     fw.close();
   }
   else std::cout << "Problem with opening file";
@@ -628,7 +628,7 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 	auto DetectorVolume = Construction::BoxVolume("Box", x_edge_length + x_edge_increase, y_edge_length, full_detector_height,
 												  Construction::Material::Air, G4VisAttributes::GetInvisible());
 
-	//DetectorVolume->SetVisAttributes(G4VisAttributes::Invisible);
+	//DetectorVolume->SetVisAttributes(G4VisAttributes::GetInvisible());
 
 	for (int module_number = 0; module_number < NMODULES; module_number++){
 		Detector::ConstructModule(DetectorVolume, module_number,

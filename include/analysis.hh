@@ -23,7 +23,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include <g4root.hh>
+#include <G4AnalysisManager.hh>
 
 namespace MATHUSLA { namespace MU {
 
