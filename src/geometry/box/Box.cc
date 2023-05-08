@@ -259,7 +259,7 @@ void Detector::SaveInfo(std::string & prefix){
   {
     //store array contents to text fill
     for (auto& layer_y : layer_z_world)
-      fw<< '[' << (-layer_y+Box_IP_Depth+scintillator_casing_thickness)/Units::Length << ", "<<  (-layer_y+Box_IP_Depth+scintillator_casing_thickness+scintillator_height)/Units::Length<< "]\n";
+      fw<< '[' << (-layer_y+Box_IP_Depth)/Units::Length << ", "<<  (-layer_y+Box_IP_Depth+2*scintillator_casing_thickness+scintillator_height)/Units::Length<< "]\n";
     fw.close();
   }
   else std::cout << "Problem with opening file";
