@@ -75,6 +75,8 @@ There are three general purpose generators built in, `basic`, `range`, and `pola
 
 There is also a _Pythia8_ generator installed which behaves similiarly to the `range` generator.
 
+There is a `file_reader` generator that produces particles with properties that are specified in an input file. The `file_reader` does not do randomization. Each entry in the input file correspond to exactly one event and may include multiple particles, which means that the physics process to generate the primary partiles needs to be taken care of outside GEANT4. This generator provide the possibility to generate controllable primary vertex at given location with pre-assigned momentum for each secondary particles. 
+
 The generator defaults are specified in `src/action/GeneratorAction.cc` but they can be overwritten by a custom generation script.
 
 ### Custom Detector
