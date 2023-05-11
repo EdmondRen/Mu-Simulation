@@ -27,13 +27,26 @@ FileReaderGenerator::FileReaderGenerator(const std::string &name,
 }
 
 void FileReaderGenerator::GeneratePrimaryVertex(G4Event *event) {
-  std::size_t particle_parameters_index = _particle_parameters.size();
+  // std::size_t particle_parameters_index = _particle_parameters.size();
+  // {
+  //   G4AutoLock lock(mutex);
+  //   particle_parameters_index = _event_counter;
+  //   ++_event_counter;
+  // }
+  // AddParticle(_particle_parameters.at(particle_parameters_index), *event);
+  std::size_t particle_parameters_index = _events.size();
   {
     G4AutoLock lock(mutex);
     particle_parameters_index = _event_counter;
     ++_event_counter;
   }
-  AddParticle(_particle_parameters.at(particle_parameters_index), *event);
+
+  auto & _event = _events[particle_parameters_index];
+
+  for (std::size_t i{}; i < _event.size(); ++i) {
+    auto particle = _event[i];
+    AddParticle(particle, *event);
+  }  
 }
 
 void FileReaderGenerator::SetNewValue(G4UIcommand *command, G4String value) {
@@ -50,19 +63,31 @@ void FileReaderGenerator::SetNewValue(G4UIcommand *command, G4String value) {
       }
       if (next_char == '#') {
               input_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-              continue;
+              continue;}
+      // "n" for new event. Make a new event if see a line "n"
+      if (next_char == 'n') {
+        _events.emplace_back();
+        // Jump to the Next line
+        input_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        continue;
+      } 
+      // append hits to this event
+      else {
+        auto &new_event = _events.back();
+        new_event.emplace_back();
+        auto &new_parameters = new_event.back();
+        if ( ! (input_stream >> new_parameters.id
+                            >> new_parameters.x
+                            >> new_parameters.y
+                            >> new_parameters.z
+                            >> new_parameters.px
+                            >> new_parameters.py
+                            >> new_parameters.pz)) {
+          throw std::runtime_error("Unable to parse particle parameters file");
+        }   
       }
-      _particle_parameters.emplace_back();
-      auto &new_parameters = _particle_parameters.back();
-      if ( ! (input_stream >> new_parameters.id
-                           >> new_parameters.x
-                           >> new_parameters.y
-                           >> new_parameters.z
-                           >> new_parameters.px
-                           >> new_parameters.py
-                           >> new_parameters.pz)) {
-        throw std::runtime_error("Unable to parse particle parameters file");
-      }
+      
+
     }
     if ( ! input_stream) {
       throw std::runtime_error("Unable to read particle parameters file");

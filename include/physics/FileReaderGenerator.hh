@@ -29,6 +29,7 @@ protected:
 
   std::size_t _event_counter = 0;
   std::vector<Particle> _particle_parameters;
+  std::vector<std::vector<Particle>> _events;
 
   Command::StringArg *_ui_pathname;
 };
