@@ -518,7 +518,7 @@ void Detector::EndOfEvent(G4HCofThisEvent*) {
   root_data.push_back(collection_data[12]);
   root_data.push_back(collection_data[13]);
 
-  const auto gen_particle_data = Tracking::ConvertToAnalysis(GeneratorAction::GetLastEvent(), SaveAll);
+  const auto gen_particle_data = Tracking::ConvertToAnalysis(GeneratorAction::GetLastEvent(), true);
   const auto extra_gen_data = Tracking::ConvertToAnalysis(GeneratorAction::GetGenerator()->ExtraDetails());
   root_data.insert(root_data.cend(), gen_particle_data.cbegin(), gen_particle_data.cend());
   root_data.insert(root_data.cend(), extra_gen_data.cbegin(), extra_gen_data.cend());

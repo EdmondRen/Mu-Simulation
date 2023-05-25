@@ -99,7 +99,7 @@ void RangeGenerator::GeneratePrimaryVertex(G4Event* event) {
 
 //__Get Last Event Data_________________________________________________________________________
 GenParticleVector RangeGenerator::GetLastEvent() const {
-  return GenParticleVector{};
+  return GenParticleVector{_particle};
 }
 //----------------------------------------------------------------------------------------------
 
