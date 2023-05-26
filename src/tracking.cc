@@ -93,7 +93,7 @@ void Hit::Print() {
 std::ostream& operator<<(std::ostream& os, const std::vector<double>& v)
 {
     os << "[";
-    for (int i = 0; i < v.size(); ++i) {
+    for (uint i = 0; i < v.size(); ++i) {
         os << v[i];
         if (i != v.size() - 1)
             os << ", ";

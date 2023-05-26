@@ -23,6 +23,7 @@ public:
   virtual void SetNewValue(G4UIcommand *command, G4String value);
   virtual std::ostream &Print(std::ostream &os = std::cout) const;
   virtual const Analysis::SimSettingList GetSpecification() const;
+  virtual GenParticleVector GetLastEvent() const;
 
 protected:
   virtual void GenerateCommands();

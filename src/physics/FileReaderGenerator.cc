@@ -67,6 +67,21 @@ void FileReaderGenerator::SetNewValue(G4UIcommand *command, G4String value) {
       // "n" for new event. Make a new event if see a line "n"
       if (next_char == 'n') {
         _events.emplace_back();
+        // Read the VERTEX information
+        std::string temp1;
+        int event_number;
+
+        if ( ! (input_stream>>  temp1
+                            >> event_number
+                            >> _particle.id
+                            >> _particle.x
+                            >> _particle.y
+                            >> _particle.z
+                            >> _particle.px
+                            >> _particle.py
+                            >> _particle.pz)) {
+          throw std::runtime_error("Unable to parse Vertex parameters file");
+        }  
         // Jump to the Next line
         input_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         continue;
@@ -95,6 +110,12 @@ void FileReaderGenerator::SetNewValue(G4UIcommand *command, G4String value) {
   } else {
     Generator::SetNewValue(command, value);
   }
+}
+
+//__Get Last Event Data_________________________________________________________________________
+// to be stored as GenParticles_xx in the root files
+GenParticleVector FileReaderGenerator::GetLastEvent() const {
+  return GenParticleVector{_particle};
 }
 
 std::ostream &FileReaderGenerator::Print(std::ostream &os) const {
