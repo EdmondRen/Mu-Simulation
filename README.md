@@ -12,6 +12,7 @@ Here is a list of useful commands:
 | Action             | Options for `./install` |
 |:------------------:|:-----------------------:|
 | Build Only         | `(none)`                |
+| Build with CMake   | `--cmake` (use this for the first time)|
 | Build and Auto Run | `--run`                 |
 | Clean CMake Build  | `--cmake --clean`       |
 | More Options       | `--help`                |
