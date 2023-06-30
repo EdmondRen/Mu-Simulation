@@ -116,7 +116,8 @@ constexpr auto module_case_thickness = 0.02*m;
 
 constexpr auto full_layer_height = scintillator_height + 2*scintillator_casing_thickness;
 constexpr auto wall_gap = 0.01*m;
-constexpr auto x_edge_increase = 2*full_layer_height + 4*wall_gap;
+constexpr auto wall_gap2 = 1.0*m;
+constexpr auto x_edge_increase = 4*full_layer_height + 2*wall_gap2 + 4*wall_gap;
 
 constexpr auto layer_w_case = full_layer_height;
 
@@ -124,7 +125,7 @@ constexpr auto full_module_height =  (25.0*m) + 6.0*layer_w_case + 5.0*layer_spa
 
 constexpr auto scintillator_z_position = 0.00;
 
-constexpr auto wall_height = 20*m;
+constexpr auto wall_height = 25*m;
 
 constexpr int NBEAMLAYERS = 8;
 constexpr auto beam_x_edge_length = 0.10*m;
@@ -668,7 +669,16 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
                                             scintillator_casing_thickness);                                                                      
     _scintillators.push_back(hermetic_wall);
     hermetic_wall->PlaceIn(DetectorVolume, G4Translate3D(-0.5L*x_edge_length - 0.5L*full_layer_height - wall_gap, 0.0, half_detector_height -  0.5L*wall_height));
-    
+
+    // Tom: add a second layer of wall
+    auto hermetic_wall2 = new Scintillator("HW2",
+                                            full_layer_height,
+                                            y_edge_length,
+                                            wall_height,
+                                            scintillator_casing_thickness);                                                                      
+    _scintillators.push_back(hermetic_wall2);
+    hermetic_wall2->PlaceIn(DetectorVolume, G4Translate3D(-0.5L*x_edge_length - 1.5L*full_layer_height - wall_gap - wall_gap2, 0.0, half_detector_height -  0.5L*wall_height));
+     
     _steel = Construction::BoxVolume("SteelPlate",
 			 x_edge_length, y_edge_length, steel_height,
 			 Construction::Material::Iron,

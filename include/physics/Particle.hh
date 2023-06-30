@@ -129,6 +129,7 @@ struct Vertex {
 struct Particle : BasicParticle {
   double t, x, y, z;
   int genParticleRef;
+  int index; //unique identifier of the particle
   
   Particle() = default;
 
@@ -208,7 +209,7 @@ struct GenParticle {
 		  mom(Pythia8::Vec4(0.,0.,0.,0.)), hasVertex(false), vertex(Pythia8::Vec4(0.,0.,0.,0.)),
 		  m(0.0), G4index(-1) {}
 
-  GenParticle(const Particle& p) : index(-1), pdgid(p.id), status(-1), moid1(-1), moid2(-1),
+  GenParticle(const Particle& p) : index(p.index), pdgid(p.id), status(-1), moid1(-1), moid2(-1),
 				   dau1(-1), dau2(-1), mom(Pythia8::Vec4(p.px,p.py,p.pz,p.e())),
 				   hasVertex(true), vertex(Pythia8::Vec4(p.x,p.y,p.z,p.t)),
 				   m(p.mass()), G4index(-1) {}

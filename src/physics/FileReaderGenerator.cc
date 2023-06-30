@@ -44,6 +44,8 @@ void FileReaderGenerator::GeneratePrimaryVertex(G4Event *event) {
   auto & _event = _events[particle_parameters_index];
 
   for (std::size_t i{}; i < _event.size(); ++i) {
+    // skip the primary particle
+    if(i==0) continue; 
     auto particle = _event[i];
     AddParticle(particle, *event);
   }  
@@ -72,7 +74,7 @@ void FileReaderGenerator::SetNewValue(G4UIcommand *command, G4String value) {
         int event_number;
 
         if ( ! (input_stream>>  temp1
-                            >> event_number
+                            >> _particle.index
                             >> _particle.id
                             >> _particle.x
                             >> _particle.y
@@ -82,6 +84,10 @@ void FileReaderGenerator::SetNewValue(G4UIcommand *command, G4String value) {
                             >> _particle.pz)) {
           throw std::runtime_error("Unable to parse Vertex parameters file");
         }  
+        // Push the information of the primary particle to list
+        // (the primary particle will not be generated. This information is saved for analysis)
+        auto &new_event = _events.back();
+        new_event.push_back(_particle);
         // Jump to the Next line
         input_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         continue;
@@ -115,7 +121,12 @@ void FileReaderGenerator::SetNewValue(G4UIcommand *command, G4String value) {
 //__Get Last Event Data_________________________________________________________________________
 // to be stored as GenParticles_xx in the root files
 GenParticleVector FileReaderGenerator::GetLastEvent() const {
-  return GenParticleVector{_particle};
+  GenParticleVector current_event = {};
+  for (int i=0; i<_events[_event_counter-1].size(); i++){
+    GenParticle x(_events[_event_counter-1][i]);
+    current_event.push_back(x);
+  }
+  return current_event;
 }
 
 std::ostream &FileReaderGenerator::Print(std::ostream &os) const {

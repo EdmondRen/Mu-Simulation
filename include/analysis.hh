@@ -23,7 +23,16 @@
 #include <vector>
 #include <unordered_map>
 
-#include <g4root.hh>
+#include <G4Version.hh>
+
+#if (G4VERSION_NUMBER>=1100)
+  #include <G4RootAnalysisManager.hh> // Geant4 V11
+#else
+  #include <g4root.hh> // Geant4 V10
+#endif
+// #include <g4root.hh> // Geant4 V10
+// #include <G4RootAnalysisManager.hh> // Geant4 V11
+
 
 namespace MATHUSLA { namespace MU {
 

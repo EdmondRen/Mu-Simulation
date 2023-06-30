@@ -559,7 +559,7 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 	// pre_data->Branch("Y_H", &Y_POS_HIT, "Y_H/D");
 
 	auto DetectorVolume = Construction::BoxVolume("Box", x_edge_length + x_edge_increase, y_edge_length, full_detector_height,
-												  Construction::Material::Air, G4VisAttributes::Invisible);
+												  Construction::Material::Air, G4VisAttributes::GetInvisible());
 
 	//DetectorVolume->SetVisAttributes(G4VisAttributes::Invisible);
 
