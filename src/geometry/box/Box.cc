@@ -125,7 +125,7 @@ constexpr auto full_module_height =  (25.0*m) + 6.0*layer_w_case + 5.0*layer_spa
 
 constexpr auto scintillator_z_position = 0.00;
 
-constexpr auto wall_height = 25*m;
+constexpr auto wall_height = 26*m;
 
 constexpr int NBEAMLAYERS = 8;
 constexpr auto beam_x_edge_length = 0.10*m;
