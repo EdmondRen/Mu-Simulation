@@ -40,35 +40,61 @@ The simulation executable itself comes with several configuration parameters:
 
 Note: The Five Body Muon Decays option will only save tracks with a five-body decay in a certain zone in the detector. Be sure this is what you want.
 
-Arguments can also be passed through the simulation to a script. Adding key value pairs which correspond to aliased arguments in a script, will be forwarded through. Here's an example:
+**1. Running the simulation interactively**
+
+The simulation exectuable can be run interactively using the -v option:
 
 ```
-./simulation -s example1.mac ke 100 phi 20
+./simulation -v
 ```
 
-This will pass the key value pairs `(ke, 100)` and `(phi, 20)` to the underlying script `example1.mac`. The file can look something like this:
+This is not recommanded unless for debugging purposes, becuase there are many commands settings that needs to be entered later by hand.
+
+**2. Running the simulation with script**
+
+The simulation exectuable can take a script that list all the setting and commands to be executed. 
+
+```
+./simulation -s YOUR_SCIPT.mac
+```
+
+The script is a text file that contains commands. Available commands are summarized in later section. Here is an example of a script:
 
 ```
 # example1.mac
 
+# Select the Detector. Box is the full 100x100m tracker
+/det/select Box
+
+# Select the Generator
 /gen/select basic
+# Set Generator-specific particle properties
+/gen/basic/id 13
+/gen/basic/t0 0 ns
+/gen/basic/vertex 0   0   84.57 m
+/gen/basic/p_unit 0 0 -1
+/gen/basic/p_mag 100 GeV/c
+/gen/basic/phi 0 rad
+/gen/basic/eta  1
 
-/gen/basic/ke {ke} GeV
-/gen/basic/phi {phi} deg
+# Set number of evets to run
+/run/beamOn 100
 ```
 
-where `{ }` denotes a key. The script will be evaluated by substituting the key for its value so the last two lines become,
+Arguments can also be passed through the simulation to a script. Adding key value pairs which correspond to aliased arguments in a script, will be forwarded through. Here's an example to make the momentum (p_mag) adjustable with arguments. Replace the number 100 in the line for momentum with a key name {momentum}:  `/gen/range/p_mag {momentum} GeV/c` where `{ }` denotes a key. The script will be evaluated by substituting the key for its value from the argument. Run the simulation with the following command:
 
 ```
-/gen/basic/ke 100 GeV
-/gen/basic/phi 20 deg
+./simulation -s example1.mac momentum 100
 ```
 
-All of the simulation configuration parameters can be passed through `./install --run` so the example above could also be written as,
+This will pass the key value pairs `(momentum 100)` to the underlying script `example1.mac` and set momentum to 100. 
+
+A general command to run the simulation is like this:
 
 ```
-./install --run -s example1.mac ke 100 phi 20
+./simulation -q  -o OUTPUT_DIR  -s YOUR_SCRIPT.mac key1 100 key2 10 ....
 ```
+
 
 ### Generators
 
@@ -104,4 +130,27 @@ A custom Detector can be specified at run time from one of the following install
 
 ### Custom Scripts
 
-A custom _Geant4_ script can be specified at run time. The script can contain generator specific commands and settings as well as _Pythia8_ settings in the form of `readString`. The script can also specify the detector to use during the simulation.
+A custom _Geant4_ script can be specified at run time. The script can contain generator specific commands and settings as well as _Pythia8_ settings in the form of `readString`. The script can also specify the detector to use during the simulation. This section summarize all available commands.
+
+**1. Selecting detector**
+
+    /det/select Box,Prototype,Cosmic,Flat,MuonMapper
+
+**2. Selecting Generator**
+
+    /gen/select basic,range,polar,pythia,file_reader
+
+**3. Generator-specific settings**
+
+Basic
+
+| Command    | Usage    |
+|:----------:|:---------:|
+| /gen/basic/id  | COMPLETED |
+
+**4. General Geant4 commands**
+
+/run/beamOn 100
+
+## Output format
+
