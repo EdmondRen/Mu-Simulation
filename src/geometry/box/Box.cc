@@ -89,7 +89,7 @@ constexpr int NMODULES{16};
 constexpr int n_top_layers{4};
 constexpr auto x_edge_length = 39.0*m;
 constexpr auto y_edge_length = 39.0*m;
-constexpr auto x_displacement = 70.0*m;
+constexpr auto x_displacement = 100.0*m;
 constexpr auto y_displacement = -19.5*m;
 constexpr auto z_displacement = 6000.0*cm;
 
@@ -106,7 +106,8 @@ constexpr auto shelf_y_edge_length = 9.0*m;
 
 constexpr auto steel_height = 0.03*m;
 
-constexpr auto air_gap = 12.6*m;
+constexpr auto air_gap = 16*m; // Total volume height that has air inside
+constexpr auto air_gap_decay = 12.6*m; // height of decay volume
 
 constexpr auto scintillator_casing_thickness = 0.003*m;
 
@@ -125,11 +126,11 @@ constexpr auto x_edge_increase = 4*full_layer_height + 2*wall_gap2 + 4*wall_gap;
 
 constexpr auto layer_w_case = full_layer_height;
 
-constexpr auto full_module_height =  air_gap + 4.0*layer_w_case + 3.0*layer_spacing_top;
+constexpr auto full_module_height =  air_gap_decay + 4.0*layer_w_case + 3.0*layer_spacing_top;
 
 constexpr auto scintillator_z_position = 0.00;
 
-constexpr auto wall_height = (2*full_layer_height + layer_spacing + air_gap);
+constexpr auto wall_height = (2*full_layer_height + layer_spacing + air_gap_decay);
 
 constexpr int NBEAMLAYERS = 4;
 constexpr auto beam_x_edge_length = 0.10*m;
@@ -145,7 +146,7 @@ constexpr double layer_z_displacement[4] = {-0.5*full_module_height + (12.6*m ) 
 											-0.5*full_module_height + (12.6*m ) + 3*layer_spacing_top + 3.5*layer_w_case};
 
 // The z distance from the TOP of the floor layer to the BOTTOM of the middle layer
-constexpr double floor_z_top = 12.6*m;
+constexpr double floor_z_top = - layer_spacing - 2*layer_w_case;
 // The z coordinates of the BOTTOM of all layers in the world
 constexpr double layer_z_world[6] = {floor_z_top +layer_spacing+2.*layer_w_case,
                                       floor_z_top +layer_w_case,
@@ -156,7 +157,7 @@ constexpr double layer_z_world[6] = {floor_z_top +layer_spacing+2.*layer_w_case,
 };                      
 
 
-constexpr double module_beam_heights[4] = {floor_z_top,
+constexpr double module_beam_heights[4] = {12.6*m,
 										   layer_spacing_top,
 										   layer_spacing_top,
 										   layer_spacing_top};
