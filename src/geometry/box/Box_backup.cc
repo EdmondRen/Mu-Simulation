@@ -27,6 +27,23 @@ namespace MATHUSLA { namespace MU {
 
 namespace Box { //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// double X_POS_STEP;
+// double Y_POS_STEP;
+// double X_POS_HIT;
+// double Y_POS_HIT;
+
+// TTree* Detector::pre_data = new TTree("pre_data", "pre_data");
+
+// void Detector::WritePreData(){
+
+//   TFile* f = new TFile("box_pre_data.root", "RECREATE");
+//   f->cd();
+
+//   pre_data->Write();
+
+//   f->Write();
+
+//}
 
 namespace Box::CavernConstruction{ ////////////////////////////////////////////////////////////////////////////////////
 
@@ -67,115 +84,136 @@ G4ThreadLocal Tracking::HitCollection* _hit_collection;
 
 //__Box Specification Variables_________________________________________________________________
 
-constexpr int scintillators_per_layer{64};
-constexpr int NMODULES{16};
-constexpr int n_top_layers{4};
-constexpr int n_floor_layers{2};
-constexpr auto x_edge_length = 39.0*m;
-constexpr auto y_edge_length = 39.0*m;
-constexpr auto x_displacement = 100.0*m;
-constexpr auto y_displacement = -19.5*m;
-constexpr auto z_displacement = 8547.0*cm;
+constexpr int scintillators_per_layer{400};
+constexpr int NMODULES{100};
+constexpr int n_top_layers{6};
+constexpr auto x_edge_length = 99.0*m;
+constexpr auto y_edge_length = 99.0*m;
+constexpr auto x_displacement = 70.0*m;
+constexpr auto y_displacement = -49.5*m;
+constexpr auto z_displacement = 6001.5*cm;
 
 constexpr auto layer_x_edge_length = 9.0*m;
 constexpr auto layer_y_edge_length = 9.0*m;
 
 constexpr auto scint_x_edge_length = 4.5*m;
 constexpr auto scint_y_edge_length = 0.045*m;
-constexpr auto scintillator_height = 0.01*m;
-
-constexpr auto shelf_thickness = 0.002*m;
-constexpr auto shelf_x_edge_length = 9.0*m;
-constexpr auto shelf_y_edge_length = 9.0*m;
+constexpr auto scintillator_height = 0.02*m;
 
 constexpr auto steel_height = 0.03*m;
 
-constexpr auto air_gap = 16*m; // Total volume height that has air inside
-constexpr auto air_gap_decay = 12.6*m; // height of decay volume
+constexpr auto air_gap = 30*m;
 
 constexpr auto scintillator_casing_thickness = 0.003*m;
 
 constexpr auto layer_spacing = 0.8*m;
 constexpr auto layer_spacing_top = 0.8*m; // Top layers have different spacing
-constexpr auto layer_count   = 4UL;
+constexpr auto layer_count   = 8UL;
 
 constexpr auto module_x_edge_length = 9.0*m;
 constexpr auto module_y_edge_length = 9.0*m;
 constexpr auto module_case_thickness = 0.02*m;
-constexpr auto module_spacing = 1.0*m;
 
 constexpr auto full_layer_height = scintillator_height + 2*scintillator_casing_thickness;
 constexpr auto wall_gap = 0.01*m;
 constexpr auto wall_gap2 = 1.0*m;
-//increase detector volume for walls - symmetric, so its size is not that relevant.
 constexpr auto x_edge_increase = 4*full_layer_height + 2*wall_gap2 + 4*wall_gap;
 
 constexpr auto layer_w_case = full_layer_height;
 
-constexpr auto full_module_height =  air_gap_decay + 4.0*layer_w_case + 3.0*layer_spacing_top;
+constexpr auto full_module_height =  (25.0*m) + 6.0*layer_w_case + 5.0*layer_spacing_top;
 
 constexpr auto scintillator_z_position = 0.00;
 
-constexpr auto wall_height = (2*full_layer_height + layer_spacing + air_gap_decay);
+constexpr auto wall_height = 26*m;
 
-constexpr int NBEAMLAYERS = 4;
+constexpr int NBEAMLAYERS = 8;
 constexpr auto beam_x_edge_length = 0.10*m;
 constexpr auto beam_y_edge_length = 0.10*m;
 constexpr auto beam_thickness = 0.02*m;
 
-constexpr auto full_detector_height = full_module_height + steel_height + n_floor_layers*layer_w_case + (n_floor_layers - 1)*layer_spacing;
+constexpr auto full_detector_height = full_module_height + steel_height + 2.0*layer_w_case + 1.0*layer_spacing;
 constexpr auto half_detector_height = 0.5L * full_detector_height;
 
-constexpr auto layer_z_displacement = [](){
-	std::array<double, n_top_layers> arr{};
-	for (int i = 0; i < n_top_layers; i++){
-		arr[i] = -0.5*full_module_height + air_gap_decay + i*layer_spacing_top + (i + 0.5)*layer_w_case;
-	}
-	return arr;
-}();
+constexpr double layer_z_displacement[8] = {-0.5*full_module_height + (25.0*m -5.0*m - layer_spacing - 2*layer_w_case) + 0.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m -5.0*m - layer_spacing - 2*layer_w_case) + layer_spacing + 1.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m ) + 0.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m ) + layer_spacing_top + 1.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m ) + 2*layer_spacing_top + 2.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m ) + 3*layer_spacing_top + 3.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m ) + 4*layer_spacing_top + 4.5*layer_w_case,
+											-0.5*full_module_height + (25.0*m ) + 5*layer_spacing_top + 5.5*layer_w_case};
 
-// The z coordinates of the BOTTOM of all layers in the world (from the ground)
-constexpr auto layer_z_world = [](){
-	std::array<double, n_top_layers + n_floor_layers> arr{};
-	for (int i = 0; i < n_floor_layers; i++){
-		arr[i] = steel_height + i*(layer_spacing + layer_w_case);
-	}
-	for (int i = n_floor_layers; i < n_floor_layers + n_top_layers; i++){
-		arr[i] = steel_height + n_floor_layers*layer_w_case + (n_floor_layers - 1)*layer_spacing; //The bottom floor part
-		arr[i] = arr[i] + air_gap_decay + (i-n_floor_layers)*(layer_spacing + layer_w_case);
-	}
-	return arr;
-}();
+// The z distance from the TOP of the floor layer to the BOTTOM of the middle layer
+constexpr double floor_z_top = 25.0*m -5.0*m - layer_spacing - 2*layer_w_case;
+// The z coordinates of the BOTTOM of all layers in the world
+constexpr double layer_z_world[10] = {floor_z_top +layer_spacing+2.*layer_w_case,
+                                      floor_z_top +layer_w_case,
+                                      -(layer_z_displacement[0]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[1]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[2]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[3]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[4]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[5]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[6]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
+                                      -(layer_z_displacement[7]+0.5*full_module_height-floor_z_top-0.5*layer_w_case)
+};                      
 
 
-constexpr auto module_beam_heights = [](){
-	std::array<double, n_top_layers> arr{};
-	for (int i=0; i < n_top_layers; i++){
-		if (i==0){arr[i] = air_gap_decay;}
-		else {arr[i] = layer_spacing_top;}
-	}
-	return arr;
-}();
+constexpr double module_beam_heights[8] = {floor_z_top,
+										   layer_spacing,
+										   5.0*m,
+										   layer_spacing_top,
+										   layer_spacing_top,
+										   layer_spacing_top,
+										   layer_spacing_top,
+										   layer_spacing_top};
 
-constexpr auto module_beam_z_pos = [](){
-	std::array<double, n_top_layers> arr{};
-	for (int i=0; i < n_top_layers; i++){
-		arr[i] = -0.5*full_module_height + i*layer_w_case + 0.5*module_beam_heights[i];
-		if (i > 0){arr[i] += (i-1)*layer_spacing_top + air_gap_decay;}
-	}
-	return arr;
-}();
+	// constexpr double module_beam_z_pos[9] = {-0.50*full_module_height + 0.50*module_beam_heights[0] + layer_w_case,
+	//                                          -0.50*full_module_height + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[1],
+	//                                          -0.50*full_module_height + 3*layer_w_case + 2*layer_spacing + 0.50*module_beam_heights[2],
+	//                                          -0.50*full_module_height + 20.0*m + layer_w_case + 0.50*module_beam_heights[3],
+	//                                          -0.50*full_module_height + 20.0*m + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[4],
+	//                                          -0.50*full_module_height + 25.0*m + layer_w_case + 0.50*module_beam_heights[5],
+	//                                          -0.50*full_module_height + 25.0*m + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[6],
+	//                                          -0.50*full_module_height + 25.0*m + 3*layer_w_case + 2*layer_spacing + 0.50*module_beam_heights[7],
+	//                                          -0.50*full_module_height + 25.0*m + 4*layer_w_case + 3*layer_spacing + 0.50*module_beam_heights[8]};
 
-//Returns the LOWEST position value of each module
+constexpr double module_beam_z_pos[8] = {-0.50*full_module_height + 0.50*module_beam_heights[0],
+										 -0.50*full_module_height + floor_z_top  + layer_w_case + 0.50*module_beam_heights[1],
+										 -0.50*full_module_height + floor_z_top  + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[2],
+										 -0.50*full_module_height + 25.0*m  + layer_w_case + 0.50*module_beam_heights[3],
+										 -0.50*full_module_height + 25.0*m  + 2*layer_w_case + 1*layer_spacing_top + 0.50*module_beam_heights[4],
+										 -0.50*full_module_height + 25.0*m  + 3*layer_w_case + 2*layer_spacing_top + 0.50*module_beam_heights[5],
+										 -0.50*full_module_height + 25.0*m  + 4*layer_w_case + 3*layer_spacing_top + 0.50*module_beam_heights[6],
+										 -0.50*full_module_height + 25.0*m  + 5*layer_w_case + 4*layer_spacing_top + 0.50*module_beam_heights[7]};
+
+
+
+// const std::string folder = "detector_geo";
+// const std::string file = "box.gdml";
+// const std::string file2 ="mod.gdml";
+// const std::string file3 ="layer.gdml";
+// const std::string file4 ="earth.gdml";
+// const std::string file5 ="modified.gdml";
+// const std::string arg4 = "http://service-spi.web.cern.ch/service-spi/app/releases/GDML/Schema/gdml.xsd";
+
+
 auto get_module_x_displacement(int tag_number){
-	int step = int(sqrt(NMODULES));
-	return -0.5*x_edge_length + 0.5*module_x_edge_length + double(tag_number % step)*(module_x_edge_length + module_spacing);
+  if (tag_number < 10) return -0.5 * x_edge_length + 0.5*module_x_edge_length;
+  else if (tag_number < 20) return -0.5*x_edge_length + 0.5*module_x_edge_length + 1.00*(module_x_edge_length + 1.0*m );
+  else if (tag_number < 30) return -0.5*x_edge_length + 0.5*module_x_edge_length + 2.00*(module_x_edge_length + 1.0*m );
+  else if (tag_number < 40) return -0.5*x_edge_length + 0.5*module_x_edge_length + 3.00*(module_x_edge_length + 1.0*m );
+  else if (tag_number < 50) return -0.5*x_edge_length + 0.5*module_x_edge_length + 4.00*(module_x_edge_length + 1.0*m );
+  else if (tag_number < 60) return -0.5*x_edge_length + 0.5*module_x_edge_length + 5.00*(module_x_edge_length + 1.0*m );
+  else if (tag_number < 70) return -0.5*x_edge_length + 0.5*module_x_edge_length + 6.00*(module_x_edge_length + 1.0*m );
+  else if (tag_number < 80) return -0.5*x_edge_length + 0.5*module_x_edge_length + 7.00*(module_x_edge_length + 1.0*m );
+  else if (tag_number < 90) return -0.5*x_edge_length + 0.5*module_x_edge_length + 8.00*(module_x_edge_length + 1.0*m );
+  else return -0.5*x_edge_length + 0.5*module_x_edge_length + 9.00*(module_x_edge_length + 1.0*m );
 }
 
-
 auto get_module_y_displacement(int tag_number){
-	int step = int(sqrt(NMODULES));
-  return double(tag_number % step)*(module_y_edge_length + module_spacing) -0.5 * y_edge_length + 0.5*module_y_edge_length;
+  return (((double) (tag_number % 10))*(module_y_edge_length + 1.0*m) -0.5 * y_edge_length + 0.5*module_y_edge_length   );
 }
 
 auto get_layer_z_displacement(int layer_number){
@@ -243,12 +281,26 @@ void Detector::Initialize(G4HCofThisEvent* event) {
 G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
   const auto deposit = step->GetTotalEnergyDeposit();
 
+  //const auto step_point = step->GetPreStepPoint();
+  //const auto position   = G4LorentzVector(step_point->GetGlobalTime(), step_point->GetPosition());
+  // X_POS_STEP = position.x();
+  // Y_POS_STEP = position.y();
+  // X_POS_HIT = 0.0;
+  // Y_POS_HIT = 0.0;
 
   if (deposit == 0.0L){
 	  //    pre_data->Fill();
     return false;
   }
 
+  // X_POS_HIT = position.x();
+  // Y_POS_HIT = position.y();
+  // pre_data->Fill();
+  // const auto track      = step->GetTrack();
+  // const auto particle   = track->GetParticleDefinition();
+  // const auto trackID    = track->GetTrackID();
+  // const auto parentID   = track->GetParentID();
+  // const auto momentum   = G4LorentzVector(step_point->GetTotalEnergy(), step_point->GetMomentum());
 
 ////////////////////////
   const auto track      = step->GetTrack();
@@ -271,59 +323,147 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 
   const auto local_position = new_position.vect() - G4ThreeVector(y_displacement, z_displacement, x_displacement);
 
+  // auto z_index = static_cast<size_t>(std::floor(+local_position.y() / (layer_spacing + scintillator_height)));
   size_t y_index = 0;
 
+//  if (new_position.y() < 6050.0L*cm) {
+//    y_index = static_cast<std::size_t>(std::floor(+local_position.y() / (layer_spacing + scintillator_height)));
+//  } else if (new_position.y() > 6060.0L*cm && new_position.y() < 6150.0L*cm) {
+//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1.0L*cm) / (layer_spacing + scintillator_height)));
+//  } else if (new_position.y() > 7900.0L*cm && new_position.y() < 8050.0L*cm) {
+//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1796.0L*cm) / (layer_spacing + scintillator_height)));
+//  } else if (new_position.y() > 8050.0L*cm && new_position.y() < 8150.0L*cm) {
+//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1797.0L*cm) / (layer_spacing + scintillator_height)));
+//  } else if (new_position.y() > 8400.0L*cm && new_position.y() < 8550.0L*cm) {
+//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2092.0L*cm) / (layer_spacing + scintillator_height)));
+//  } else if (new_position.y() > 8560.0L*cm && new_position.y() < 8650.0L*cm) {
+//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2093.0L*cm) / (layer_spacing + scintillator_height)));
+// } else if (new_position.y() > 8660.0L*cm && new_position.y() < 8750.0L*cm) {
+//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2094.0L*cm) / (layer_spacing + scintillator_height)));
+//  } else if (new_position.y() > 8760.0L*cm && new_position.y() < 8850.0L*cm) {
+//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2095.0L*cm) / (layer_spacing + scintillator_height)));
+//  } else {
+//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2096.0L*cm) / (layer_spacing + scintillator_height)));
+ // }
 
-	double layer_y_global[n_top_layers + n_floor_layers];
-	for (int i = 0; i < n_top_layers + n_floor_layers; i++){
-		layer_y_global[i] = layer_z_world[i] + Box_IP_Depth;
-	}
-	
-	for (int i = 0; i < n_top_layers + n_floor_layers; i++){
-		if (new_position.y() >= layer_y_global[i] && new_position.y() <= layer_y_global[i] + layer_w_case){
-			y_index = i;
-			break;
-		}
-	}
+   if (new_position.y() <= 6003.5L*cm) {
+    y_index = static_cast<std::size_t>(std::floor(+local_position.y() / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 6103.5L*cm && new_position.y() <= 6105.5L*cm) {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 100.0L*cm) / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 8101.5L*cm && new_position.y() <= 8103.5L*cm) {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1996.0L*cm) / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 8203.5L*cm && new_position.y() <= 8205.5L*cm) {
+    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2096.0L*cm) / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 8601.5L*cm && new_position.y() <= 8603.5L*cm) {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2492.0L*cm) / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 8683.5L*cm && new_position.y() <= 8685.5L*cm) {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2492.0L*cm +80.0L*cm) / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 8765.5L*cm && new_position.y() <= 8767.5L*cm) {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2492.0L*cm +2*80.0L*cm) / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 8847.5L*cm && new_position.y() <= 8849.5L*cm) {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2492.0L*cm +3*80.0L*cm) / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 8929.5L*cm && new_position.y() <= 8931.5L*cm) {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2492.0L*cm +4*80.0L*cm) / (layer_spacing + scintillator_height)));
+   } else if (new_position.y() >= 9011.5L*cm && new_position.y() <= 9013.5L*cm) {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2492.0L*cm +5*80.0L*cm) / (layer_spacing + scintillator_height)));
+   } else {
+	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2492.0L*cm +6*80.0L*cm) / (layer_spacing + scintillator_height)));
+  }
 
+  int _rotation = (1UL + y_index) % 2;
+  size_t x_index = 0;
+  size_t z_index = 0;
 
-	size_t x_index = 0;
-	size_t z_index = 0;
+  if (_rotation == 0){
 
-	double layer_x_global[int(sqrt(NMODULES))];//we assume detector is a square
-	for (int i = 0; i < int(sqrt(NMODULES)); i++) {
-		layer_x_global[i] = get_module_y_displacement(i); //CMS coordinates
-	}
+	  if (new_position.x() <= -4050.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor(+local_position.x() / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= -3950.0L*cm && new_position.x() <= -3050.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 100.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= -2950.0L*cm && new_position.x() <= -2050.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 200.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= -1950.0L*cm && new_position.x() <= -1050.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 300.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= -950.0L*cm && new_position.x() <= -50.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 400.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= 50.0L*cm && new_position.x() <= 950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 500.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= 1050.0L*cm && new_position.x() <= 1950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 600.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= 2050.0L*cm && new_position.x() <= 2950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 700.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= 3050.0L*cm && new_position.x() <= 3950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 800.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.x() >= 4050.0L*cm && new_position.x() <= 4950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 900.0L*cm) / (scint_y_edge_length) ));
+	  }
+	  if (new_position.z() <= 7900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor(+local_position.z() / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 8000.0L*cm && new_position.z() <= 8900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 100.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 9000.0L*cm && new_position.z() <= 9900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 200.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 10000.0L*cm && new_position.z() <= 10900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 300.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 11000.0L*cm && new_position.z() <= 11900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 400.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 12000.0L*cm && new_position.z() <= 12900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 500.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 13000.0L*cm && new_position.z() <= 13900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 600.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 14000.0L*cm && new_position.z() <= 14900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 700.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 15000.0L*cm && new_position.z() <= 15900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 800.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.z() >= 16000.0L*cm && new_position.z() <= 16900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 900.0L*cm) / (scint_x_edge_length) ));
+	  }
 
-	double layer_z_global[int(sqrt(NMODULES))];
-	for (int i = 0; i < int(sqrt(NMODULES)); i++) {
-		layer_z_global[i] = get_module_x_displacement(i) + x_displacement;//CMS coordinates
-	}
+  } else if (_rotation == 1){
 
-	bool x_long = y_index % 2; // Even -> x-direction is long
-	if (x_long) {
-		for (int i = 0; i < int(sqrt(NMODULES)); i++){
-			if (new_position.x() >= layer_x_global[i] && new_position.x() <= layer_x_global[i] + module_x_edge_length){
-				x_index = std::floor(i*(module_y_edge_length/scint_x_edge_length)); // i * scintillator bars per module
-		    	x_index = x_index + (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
-			}
-			if (new_position.z() >=layer_z_global[i] && new_position.z() <= layer_z_global[i] + module_y_edge_length){
-				z_index = std::floor(i*(module_x_edge_length/scint_y_edge_length)); // i * scintillator bars per module
-		    	z_index = z_index + (std::floor((+local_position.z() - i*(module_spacing + module_y_edge_length))/(scint_y_edge_length))); // The current module
-			}
-		}
-	} else { // z-direction is long
-		for (int i = 0; i < int(sqrt(NMODULES)); i++){
-			if (new_position.x() >= layer_x_global[i] && new_position.x() <= layer_x_global[i] + module_y_edge_length){
-				x_index = std::floor(i*(module_x_edge_length/scint_y_edge_length)); // i * scintillator bars per module
-		    	x_index = x_index + (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
-			}
-			if (new_position.z() >=layer_z_global[i] && new_position.z() <= layer_z_global[i] + module_x_edge_length){
-				z_index = std::floor(i*(module_x_edge_length/scint_x_edge_length)); // i * scintillator bars per module
-		    	z_index = z_index + (std::floor((+local_position.z() - i*(module_spacing + module_y_edge_length))/(scint_x_edge_length))); // The current module
-			}
-		}
-	}
+	  if (new_position.x() <= -4050.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor(+local_position.x() / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= -3950.0L*cm && new_position.x() <= -3050.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 100.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= -2950.0L*cm && new_position.x() <= -2050.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 200.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= -1950.0L*cm && new_position.x() <= -1050.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 300.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= -950.0L*cm && new_position.x() <= -50.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 400.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= 50.0L*cm && new_position.x() <= 950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 500.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= 1050.0L*cm && new_position.x() <= 1950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 600.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= 2050.0L*cm && new_position.x() <= 2950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 700.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= 3050.0L*cm && new_position.x() <= 3950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 800.0L*cm) / (scint_x_edge_length) ));
+	  } else if (new_position.x() >= 4050.0L*cm && new_position.x() <= 4950.0L*cm) {
+		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 900.0L*cm) / (scint_x_edge_length) ));
+	  }
+	  if (new_position.z() <= 7900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor(+local_position.z() / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 8000.0L*cm && new_position.z() <= 8900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 100.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 9000.0L*cm && new_position.z() <= 9900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 200.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 10000.0L*cm && new_position.z() <= 10900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 300.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 11000.0L*cm && new_position.z() <= 11900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 400.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 12000.0L*cm && new_position.z() <= 12900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 500.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 13000.0L*cm && new_position.z() <= 13900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 600.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 14000.0L*cm && new_position.z() <= 14900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 700.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 15000.0L*cm && new_position.z() <= 15900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 800.0L*cm) / (scint_y_edge_length) ));
+	  } else if (new_position.z() >= 16000.0L*cm && new_position.z() <= 16900.0L*cm) {
+		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 900.0L*cm) / (scint_y_edge_length) ));
+	  }
+  }
 
   const auto x_name = std::to_string(x_index);
   const auto z_name = std::to_string(z_index);
@@ -413,17 +553,6 @@ G4VPhysicalVolume* Detector::ConstructScintillatorLayer(G4LogicalVolume* ModuleV
   //G4Translate3D(0.5*layer_x_edge_length, 0.5*layer_y_edge_length, layer_z_displacement)
 }
 
-G4VPhysicalVolume* Detector::ConstructShelf(G4LogicalVolume* ModuleVolume, int module_number, int layer_number, dimension module_x_displacement, dimension module_y_displacement, dimension layer_z_displacement){
-
-	auto Shelf = Construction::BoxVolume("M" + std::to_string(module_number) + "SL" + std::to_string(layer_number), shelf_x_edge_length, shelf_y_edge_length, shelf_thickness, Construction::Material::Aluminum, Construction::AlAttributes());
-
-	return Construction::PlaceVolume(Shelf, ModuleVolume, Construction::Transform(-0.50*module_x_edge_length + 0.50*shelf_x_edge_length,
-																				-0.50*module_y_edge_length + 0.50*shelf_y_edge_length,
-																				 layer_z_displacement + 0.5*layer_w_case +0.5*shelf_thickness));
-
-  //G4Translate3D(0.5*layer_x_edge_length, 0.5*layer_y_edge_length, layer_z_displacement)
-}
-
 G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, int tag_number, dimension detector_x, dimension detector_y, dimension detector_z){
 
 	auto ModuleVolume = Construction::BoxVolume("Module" + std::to_string(tag_number), module_x_edge_length + module_case_thickness, module_y_edge_length + module_case_thickness, full_module_height);
@@ -439,15 +568,12 @@ G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, in
 															0*m,
 															0*m,
 															get_layer_z_displacement(layer));
-		//Inserting the Shelves below the scintillators
-		auto currentShelf = Detector::ConstructShelf(ModuleVolume, tag_number, layer, 0*m, 0*m, get_layer_z_displacement(layer));
     UNUSED(current);
 	}
 
   UNUSED(detector_x);
   UNUSED(detector_y);
   UNUSED(detector_z);
-
 
 	//CONSTRUCTING AND INSERTING STEEL BEAMS
 
@@ -485,7 +611,7 @@ G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, in
     return Construction::PlaceVolume(ModuleVolume, DetectorVolume,
 									 Construction::Transform(get_module_x_displacement(tag_number),
 															 get_module_y_displacement(tag_number),
-                                                             half_detector_height - steel_height - n_floor_layers*layer_w_case - (n_floor_layers -1)*layer_spacing  - 0.5*full_module_height,
+                                                             half_detector_height - steel_height - 2.0*layer_w_case - 1*layer_spacing  - 0.5*full_module_height,
 															 0.0, 0.0, 1.0, 0.0));
 
 
@@ -562,7 +688,7 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 	//	Construction::Export(DetectorVolume, folder, file, arg4 );
 
 	return Construction::PlaceVolume(DetectorVolume, world,
-		   Construction::Transform(0.5L*x_edge_length + x_displacement, 0.5L*y_edge_length + y_displacement, -0.50*full_detector_height));
+		   Construction::Transform(0.5L*x_edge_length + x_displacement, 0.5L*y_edge_length + y_displacement, -0.50*full_detector_height + floor_z_top + layer_spacing + 2.*layer_w_case + steel_height));
 
 }
 
