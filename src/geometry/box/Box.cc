@@ -107,8 +107,11 @@ constexpr auto module_spacing = 1.0*m;
 constexpr auto full_layer_height = scintillator_height + 2*scintillator_casing_thickness;
 constexpr auto wall_gap = 0.01*m;
 constexpr auto wall_gap2 = 1.0*m;
-//increase detector volume for walls - symmetric, so its size is not that relevant.
-constexpr auto x_edge_increase = 4*full_layer_height + 2*wall_gap2 + 4*wall_gap;
+//increase detector volume for walls - symmetric, so its size is not that relevant, so long as it's bigger
+//These are only for the logical volume, so they don't matter too much.
+constexpr auto x_front_wall = 4*full_layer_height + 2*wall_gap2 + 4*wall_gap; //double what you need, since it is symmetric on either side
+constexpr auto x_back_wall = 8*full_layer_height * 8*layer_spacing_top;
+constexpr auto x_edge_increase = x_front_wall + x_back_wall;
 
 constexpr auto layer_w_case = full_layer_height;
 
@@ -169,7 +172,7 @@ constexpr auto module_beam_z_pos = [](){
 //Returns the LOWEST position value of each module
 auto get_module_x_displacement(int tag_number){
 	int step = int(sqrt(NMODULES));
-	return -0.5*x_edge_length + 0.5*module_x_edge_length + double(tag_number % step)*(module_x_edge_length + module_spacing);
+	return -0.5*x_edge_length + 0.5*module_x_edge_length + int(tag_number / step)*(module_x_edge_length + module_spacing);
 }
 
 
@@ -270,71 +273,106 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
   //__________________________________________________________________________________________
 
   const auto local_position = new_position.vect() - G4ThreeVector(y_displacement, z_displacement, x_displacement);
+  
 
-  size_t y_index = 0;
-
-
-	double layer_y_global[n_top_layers + n_floor_layers];
-	for (int i = 0; i < n_top_layers + n_floor_layers; i++){
-		layer_y_global[i] = layer_z_world[i] + Box_IP_Depth;
-	}
-	
-	for (int i = 0; i < n_top_layers + n_floor_layers; i++){
-		if (new_position.y() >= layer_y_global[i] && new_position.y() <= layer_y_global[i] + layer_w_case){
-			y_index = i;
-			break;
-		}
-	}
-
-
-	size_t x_index = 0;
+	size_t y_index = 0;
+	size_t x_module = 0;// MODULE index
+	size_t x_index = 0;// SCINTILLATOR index
+	size_t z_module = 0;
 	size_t z_index = 0;
+	if (local_position.z() < 0) { // It is the first wall layer
+		z_module = 1 - int(abs(local_position.z()/wall_gap2));//assumes 2 wall layers
+		z_index = 0;
+		if (z_module % 2 == 0) {
+			y_index = int(abs(local_position.y()/scint_y_edge_length));
+			x_index = int(abs(local_position.x()/scint_x_edge_length));
+		} else {
+			y_index = int(abs(local_position.y()/scint_x_edge_length));
+			x_index = int(abs(local_position.x()/scint_y_edge_length));
+		}
+		x_module = 0;
 
-	double layer_x_global[int(sqrt(NMODULES))];//we assume detector is a square
-	for (int i = 0; i < int(sqrt(NMODULES)); i++) {
-		layer_x_global[i] = get_module_y_displacement(i); //CMS coordinates
-	}
-
-	double layer_z_global[int(sqrt(NMODULES))];
-	for (int i = 0; i < int(sqrt(NMODULES)); i++) {
-		layer_z_global[i] = get_module_x_displacement(i) + x_displacement;//CMS coordinates
-	}
-
-	bool x_long = y_index % 2; // Even -> x-direction is long
-	if (x_long) {
-		for (int i = 0; i < int(sqrt(NMODULES)); i++){
-			if (new_position.x() >= layer_x_global[i] && new_position.x() <= layer_x_global[i] + module_x_edge_length){
-				x_index = std::floor(i*(module_y_edge_length/scint_x_edge_length)); // i * scintillator bars per module
-		    	x_index = x_index + (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
-			}
-			if (new_position.z() >=layer_z_global[i] && new_position.z() <= layer_z_global[i] + module_y_edge_length){
-				z_index = std::floor(i*(module_x_edge_length/scint_y_edge_length)); // i * scintillator bars per module
-		    	z_index = z_index + (std::floor((+local_position.z() - i*(module_spacing + module_y_edge_length))/(scint_y_edge_length))); // The current module
+  	} else if (local_position.z() < x_edge_length) { // It is in the main detector
+		for (int i = 0; i < n_top_layers + n_floor_layers; i++){
+			if (local_position.y() >= layer_z_world[i] && local_position.y() <= layer_z_world[i] + layer_w_case){
+				y_index = i;
+				break;
 			}
 		}
-	} else { // z-direction is long
-		for (int i = 0; i < int(sqrt(NMODULES)); i++){
-			if (new_position.x() >= layer_x_global[i] && new_position.x() <= layer_x_global[i] + module_y_edge_length){
-				x_index = std::floor(i*(module_x_edge_length/scint_y_edge_length)); // i * scintillator bars per module
-		    	x_index = x_index + (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
+		bool x_long = y_index % 2; // Even -> x-direction is long
+
+		if (y_index < n_floor_layers) { //In the floor
+			x_module = 0;
+			z_module = 0; //n front walls
+			if (x_long == 0) {
+				x_index = int(local_position.x()/scint_x_edge_length);
+				z_index = int(local_position.z()/scint_y_edge_length);
+			} else {
+				x_index = int(local_position.x()/scint_y_edge_length);
+				z_index = int(local_position.z()/scint_x_edge_length);
 			}
-			if (new_position.z() >=layer_z_global[i] && new_position.z() <= layer_z_global[i] + module_x_edge_length){
-				z_index = std::floor(i*(module_x_edge_length/scint_x_edge_length)); // i * scintillator bars per module
-		    	z_index = z_index + (std::floor((+local_position.z() - i*(module_spacing + module_y_edge_length))/(scint_x_edge_length))); // The current module
+		} else {//Main detection layers
+			for (int i = 0; i < int(sqrt(NMODULES)); i++){
+				//Taking advantage of square symmetry
+				auto coord = get_module_y_displacement(i) + 0.5*(y_edge_length-module_y_edge_length);
+				if (local_position.x() >= coord && local_position.x() <= coord + module_x_edge_length){
+					x_module = i;
+					if (x_long == 0) {
+		    			x_index = x_index + (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
+					} else {
+	    				x_index = (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
+					}
+				}
+				if (local_position.z() >= coord && local_position.z() <= coord + module_y_edge_length){
+					z_module = i + 2; //n front walls
+					if (x_long == 0) {
+	    				z_index = (std::floor((+local_position.z() - i*(module_spacing + module_y_edge_length))/(scint_y_edge_length)));
+					} else {
+	    				z_index = (std::floor((+local_position.z() - i*(module_spacing + module_y_edge_length))/(scint_x_edge_length)));
+					}
+				}
+			}
+		}
+
+  	} else if (local_position.z() > x_edge_length) { // It is in the back wall
+		// 2 = N_front_walls
+		z_module = 2 + int(sqrt(NMODULES)) + int((local_position.z()-x_edge_length)/(layer_w_case + layer_spacing_top));
+		z_index = 0;
+		bool x_long = z_module % 2; // Even -> x-direction is long
+		//BOTTOM of back wall = First top layer - module's dimension
+		double y_back_displacement = layer_z_world[n_floor_layers] - module_x_edge_length; 
+		for (int i = 0; i < int(sqrt(NMODULES)); i++){
+			auto coord = get_module_y_displacement(i) + 0.5*(y_edge_length-module_y_edge_length);
+			if (local_position.x() >= coord && local_position.x() <= coord + module_x_edge_length){
+				x_module = i;
+				if (x_long == 0) {
+		    		x_index = x_index + (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
+					y_index = int((local_position.y() - y_back_displacement)/scint_y_edge_length);
+				} else {
+	    			x_index = (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
+					y_index = int((local_position.y() - y_back_displacement)/scint_x_edge_length);
+				}
+				break;//Don't need to check x and y independently
 			}
 		}
 	}
+
 
   const auto x_name = std::to_string(x_index);
+  const auto x_modName = std::to_string(x_module);
+  const auto y_name = std::to_string(y_index);
   const auto z_name = std::to_string(z_index);
+  const auto z_modName = std::to_string(z_module);
 
   _hit_collection->insert(new Tracking::Hit(
     particle,
     trackID,
     parentID,
-	std::to_string(1UL + y_index)
-    + (z_index < 10UL ? "000" + z_name : (z_index < 100UL ? "00" + z_name : (z_index < 1000UL ? "0" + z_name : z_name)))
-	+ (x_index < 10UL ? "000" + x_name : (x_index < 100UL ? "00" + x_name : (x_index < 1000UL ? "0" + x_name : x_name))),
+	(x_module < 10UL ? "00" + x_modName : (x_module < 100UL ? "0" + x_modName : x_modName))
+	+ (x_index < 10UL ? "00" + x_name : (x_index < 100UL ? "0" + x_name : x_name))
+	+ (y_index < 10UL ? "00" + y_name : (y_index < 100UL ? "0" + y_name : y_name))
+	+ (z_module < 10UL ? "00" + z_modName : (z_module < 100UL ? "0" + z_modName : z_modName))
+	+ (z_index < 10UL ? "00" + z_name : (z_index < 100UL ? "0" + z_name : z_name)),
     deposit / Units::Energy,
     G4LorentzVector(new_position.t() / Units::Time,   new_position.vect() / Units::Length),
     G4LorentzVector(new_momentum.e() / Units::Energy, new_momentum.vect() / Units::Momentum)));
@@ -410,7 +448,6 @@ G4VPhysicalVolume* Detector::ConstructScintillatorLayer(G4LogicalVolume* ModuleV
       UNUSED(module_y_displacement);
 
   return current->PlaceIn(ModuleVolume, G4Translate3D(0.0, 0.0, layer_z_displacement) );
-  //G4Translate3D(0.5*layer_x_edge_length, 0.5*layer_y_edge_length, layer_z_displacement)
 }
 
 G4VPhysicalVolume* Detector::ConstructShelf(G4LogicalVolume* ModuleVolume, int module_number, int layer_number, dimension module_x_displacement, dimension module_y_displacement, dimension layer_z_displacement){
@@ -421,17 +458,11 @@ G4VPhysicalVolume* Detector::ConstructShelf(G4LogicalVolume* ModuleVolume, int m
 																				-0.50*module_y_edge_length + 0.50*shelf_y_edge_length,
 																				 layer_z_displacement + 0.5*layer_w_case +0.5*shelf_thickness));
 
-  //G4Translate3D(0.5*layer_x_edge_length, 0.5*layer_y_edge_length, layer_z_displacement)
 }
 
 G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, int tag_number, dimension detector_x, dimension detector_y, dimension detector_z){
 
 	auto ModuleVolume = Construction::BoxVolume("Module" + std::to_string(tag_number), module_x_edge_length + module_case_thickness, module_y_edge_length + module_case_thickness, full_module_height);
-
-	// auto ModuleCaseVolume = Construction::OpenBoxVolume("Module" + std::to_string(tag_number) + "_Case", module_x_edge_length, module_y_edge_length, full_module_height,
-	//                                                 module_case_thickness, Construction::Material::Iron, *ModuleVisAttr());
-
-	// Construction::PlaceVolume(ModuleCaseVolume, ModuleVolume, Construction::Transform(0.0, 0.0, 0.0));
 
 
 	for (std::size_t layer{}; layer < layer_count; ++layer) {
@@ -476,12 +507,6 @@ G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, in
 	}
 
 
-	// if (tag_number == 0) {
-	// 	std::cout << "ABOUT TO WRITE GDML FOR MODULE" << std::endl;
-	// 	Construction::Export(ModuleVolume, folder, file2, arg4 );
-	// }
-
-
     return Construction::PlaceVolume(ModuleVolume, DetectorVolume,
 									 Construction::Transform(get_module_x_displacement(tag_number),
 															 get_module_y_displacement(tag_number),
@@ -491,25 +516,47 @@ G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, in
 
 }
 
+G4VPhysicalVolume* Detector::ConstructWallModule(G4LogicalVolume* DetectorVolume, int tag_number){
+	double y_displacement = get_module_y_displacement(tag_number);
+	double x_size = (n_top_layers)*full_layer_height + (n_top_layers - 1)*layer_spacing_top;// top part of module, basically
+	double z_size = module_x_edge_length;
+	double y_size = module_y_edge_length;
+	auto ModuleVolume = Construction::BoxVolume("WallModule" + std::to_string(tag_number), x_size, y_size, z_size);
+
+	for (int i = 0; i < n_top_layers; i++){
+		double x_position = (0.5 + i)*full_layer_height + i*layer_spacing_top;
+		auto BackScintillator = new Scintillator("BS_" + std::to_string(tag_number) + "_" + std::to_string(i), full_layer_height, module_y_edge_length, module_x_edge_length, scintillator_casing_thickness);
+		_scintillators.push_back(BackScintillator);
+		std::cout << x_size << " " << y_size << " " << z_size << " " << std::endl;
+		std::cout <<"x_position: " << x_position << std::endl;
+		BackScintillator->PlaceIn(ModuleVolume, G4Translate3D(x_position -0.5*x_size, 0, 0));
+	}
+
+
+
+	return Construction::PlaceVolume(ModuleVolume, DetectorVolume,
+			Construction::Transform(0.5*x_edge_length + 0.5*x_size, get_module_y_displacement(tag_number), 0.5*(z_size + full_detector_height) - layer_z_world[n_floor_layers] ));
+}
+
 //__Build Detector______________________________________________________________________________
 G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 	Scintillator::Material::Define();
 	_scintillators.clear();
-	// pre_data->Branch("X_S", &X_POS_STEP, "X_S/D");
-	// pre_data->Branch("Y_S", &Y_POS_STEP, "Y_S/D");
-	// pre_data->Branch("X_H", &X_POS_HIT, "X_H/D");
-	// pre_data->Branch("Y_H", &Y_POS_HIT, "Y_H/D");
 
 	auto DetectorVolume = Construction::BoxVolume("Box", x_edge_length + x_edge_increase, y_edge_length, full_detector_height,
 												  Construction::Material::Air, G4VisAttributes::GetInvisible());
 
-	//DetectorVolume->SetVisAttributes(G4VisAttributes::Invisible);
 
 	for (int module_number = 0; module_number < NMODULES; module_number++){
 		Detector::ConstructModule(DetectorVolume, module_number,
 					   0.5L, //These arguments are not actually used
 					   0.5L,
 					   0.0L);
+	}
+
+	for (int module_number = 0; module_number < int(sqrt(NMODULES)); module_number++){
+		std::cout << "Wall Module " << module_number << std::endl;
+		Detector::ConstructWallModule(DetectorVolume, module_number);
 	}
 
     auto first_hermetic_floor = new Scintillator("HF1",
@@ -528,13 +575,6 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
     _scintillators.push_back(second_hermetic_floor);
     second_hermetic_floor->PlaceIn(DetectorVolume, G4Translate3D(0.0, 0.0, half_detector_height - 1.5*layer_w_case - layer_spacing - steel_height));
 
- //   auto third_hermetic_floor = new Scintillator("HF3",
- //                                               x_edge_length,
- //                                                y_edge_length,
- //                                                full_layer_height,
- //                                                scintillator_casing_thickness);
- //   _scintillators.push_back(third_hermetic_floor);
- //   third_hermetic_floor->PlaceIn(DetectorVolume, G4Translate3D(0.0, 0.0, half_detector_height - 2.5*layer_w_case - 2*layer_spacing - steel_height));
 
     auto hermetic_wall = new Scintillator("HW1",
                                             full_layer_height,
@@ -559,7 +599,6 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 			 Construction::CasingAttributes());
 	Construction::PlaceVolume(_steel, DetectorVolume, Construction::Transform(0.0, 0.0, half_detector_height - 0.5*steel_height));
 
-	//	Construction::Export(DetectorVolume, folder, file, arg4 );
 
 	return Construction::PlaceVolume(DetectorVolume, world,
 		   Construction::Transform(0.5L*x_edge_length + x_displacement, 0.5L*y_edge_length + y_displacement, -0.50*full_detector_height));
