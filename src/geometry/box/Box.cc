@@ -71,6 +71,8 @@ constexpr int scintillators_per_layer{64};
 constexpr int NMODULES{16};
 constexpr int n_top_layers{4};
 constexpr int n_floor_layers{2};
+constexpr int n_wall_layers{2};
+constexpr int n_back_layers = sqrt(NMODULES);
 constexpr auto x_edge_length = 39.0*m;
 constexpr auto y_edge_length = 39.0*m;
 constexpr auto x_displacement = 100.0*m;
@@ -273,71 +275,95 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
   //__________________________________________________________________________________________
 
   const auto local_position = new_position.vect() - G4ThreeVector(y_displacement, z_displacement, x_displacement);
-  
-
+ 	
+ 	size_t x_index = 0;
+    size_t x_module = 0;	
 	size_t y_index = 0;
-	size_t x_module = 0;// MODULE index
-	size_t x_index = 0;// SCINTILLATOR index
-	size_t z_module = 0;
+	size_t y_module = 0;
 	size_t z_index = 0;
-	if (local_position.z() < 0) { // It is the first wall layer
-		z_module = 1 - int(abs(local_position.z()/wall_gap2));//assumes 2 wall layers
-		z_index = 0;
-		if (z_module % 2 == 0) {
+	size_t z_module = 0;
+	size_t bar_direction = 0; //0-x,1-y,2-z
+	size_t allignment = 0; //0-layer, 1-wall
+	size_t layerID = 0;
+	double  center1 = 0; //stored
+	double center2 = 0;//stored
+	if (local_position.z() < 0) { // It is the front wall layer
+		allignment = 1;
+		z_module = n_wall_layers - 1 - int(abs(local_position.z()/wall_gap2));
+		layerID = z_module;
+		center2 = x_displacement - wall_gap - 0.5*full_layer_height - (n_wall_layers - 1 - z_module)*(full_layer_height + wall_gap2);
+		if (z_module % 2 == 0) {//x is long way
+			bar_direction = 0;
 			y_index = int(abs(local_position.y()/scint_y_edge_length));
+			center1 = (0.5+y_index)*scint_y_edge_length + z_displacement;
 			x_index = int(abs(local_position.x()/scint_x_edge_length));
 		} else {
+			bar_direction = 1;
 			y_index = int(abs(local_position.y()/scint_x_edge_length));
 			x_index = int(abs(local_position.x()/scint_y_edge_length));
+			center1 =(0.5+x_index)*scint_y_edge_length + y_displacement;
 		}
-		x_module = 0;
 
-  	} else if (local_position.z() < x_edge_length) { // It is in the main detector
+  	} else if (local_position.z() < x_edge_length) { // It is in the main detector (horizontal layers)
+		allignment = 0;
 		for (int i = 0; i < n_top_layers + n_floor_layers; i++){
 			if (local_position.y() >= layer_z_world[i] && local_position.y() <= layer_z_world[i] + layer_w_case){
-				y_index = i;
+				y_module = i;
 				break;
 			}
 		}
-		bool x_long = y_index % 2; // Even -> x-direction is long
+		bool x_long = y_module % 2; // Even -> x-direction is long
 
-		if (y_index < n_floor_layers) { //In the floor
-			x_module = 0;
-			z_module = 0; //n front walls
+		if (y_module < n_floor_layers) { //In the floor
+			layerID = y_module + n_wall_layers;
 			if (x_long == 0) {
-				x_index = int(local_position.x()/scint_x_edge_length);
+				bar_direction = 0;
 				z_index = int(local_position.z()/scint_y_edge_length);
+				center2 = (z_index+ 0.5)*scint_y_edge_length + x_displacement;
+				x_index = int(local_position.x()/scint_x_edge_length);
+				center1 = layer_z_world[y_module] + z_displacement + 0.5*full_layer_height;
 			} else {
-				x_index = int(local_position.x()/scint_y_edge_length);
+				bar_direction = 2;
 				z_index = int(local_position.z()/scint_x_edge_length);
+				x_index = int(local_position.x()/scint_y_edge_length);
+				center1 = (x_index+ 0.5)*scint_y_edge_length + y_displacement;
+				center2 = layer_z_world[y_module] + z_displacement + 0.5*full_layer_height;
 			}
-		} else {//Main detection layers
+		} else {//Main  detection layers
+			layerID = y_module + n_wall_layers;
 			for (int i = 0; i < int(sqrt(NMODULES)); i++){
-				//Taking advantage of square symmetry
-				auto coord = get_module_y_displacement(i) + 0.5*(y_edge_length-module_y_edge_length);
-				if (local_position.x() >= coord && local_position.x() <= coord + module_x_edge_length){
+				//Taking advantage of square symmetry: iterate through x/z simultaneously
+				auto coord = get_module_y_displacement(i) + 0.5*(y_edge_length-module_y_edge_length);//back corner of module
+				if ((local_position.x() >= coord && local_position.x() <= coord + module_x_edge_length)){
 					x_module = i;
-					if (x_long == 0) {
-		    			x_index = x_index + (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
-					} else {
-	    				x_index = (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
+					if (x_long == 1) {//x is short
+						bar_direction = 2;
+	    				x_index = (std::floor((+local_position.x() - x_module*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
+						center1 = x_module*(module_spacing + module_x_edge_length) + (0.5 + x_index)*scint_y_edge_length + y_displacement;
+						center2 = layer_z_world[y_module] + z_displacement + 0.5*full_layer_height;
+					} else {//x is long
+	    				x_index = (std::floor((+local_position.x() - x_module*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
 					}
 				}
 				if (local_position.z() >= coord && local_position.z() <= coord + module_y_edge_length){
-					z_module = i + 2; //n front walls
-					if (x_long == 0) {
-	    				z_index = (std::floor((+local_position.z() - i*(module_spacing + module_y_edge_length))/(scint_y_edge_length)));
+					z_module = i;
+					if (x_long == 0) {//so z is short
+						bar_direction = 0;
+	    				z_index = (std::floor((+local_position.z() - z_module*(module_spacing + module_y_edge_length))/(scint_y_edge_length)));
+						center2 = z_module*(module_spacing + module_y_edge_length) + (0.5 + z_index)*scint_y_edge_length + x_displacement;
+						center1 = layer_z_world[y_module] + z_displacement + 0.5*full_layer_height;
 					} else {
-	    				z_index = (std::floor((+local_position.z() - i*(module_spacing + module_y_edge_length))/(scint_x_edge_length)));
+	    				z_index = (std::floor((+local_position.z() - z_module*(module_spacing + module_y_edge_length))/(scint_x_edge_length)));
 					}
 				}
 			}
 		}
 
   	} else if (local_position.z() > x_edge_length) { // It is in the back wall
-		// 2 = N_front_walls
-		z_module = 2 + int(sqrt(NMODULES)) + int((local_position.z()-x_edge_length)/(layer_w_case + layer_spacing_top));
-		z_index = 0;
+		allignment = 1;
+		z_module = int((local_position.z()-x_edge_length)/(layer_w_case + layer_spacing_top));
+		center2 = z_module*(layer_w_case + layer_spacing_top) + 0.5*layer_w_case + x_edge_length + x_displacement;
+		layerID = z_module + n_wall_layers + n_floor_layers + sqrt(NMODULES);
 		bool x_long = z_module % 2; // Even -> x-direction is long
 		//BOTTOM of back wall = First top layer - module's dimension
 		double y_back_displacement = layer_z_world[n_floor_layers] - module_x_edge_length; 
@@ -346,33 +372,61 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 			if (local_position.x() >= coord && local_position.x() <= coord + module_x_edge_length){
 				x_module = i;
 				if (x_long == 0) {
-		    		x_index = x_index + (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
+					bar_direction = 0;
+		    		x_index = (std::floor((+local_position.x() - x_module*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
 					y_index = int((local_position.y() - y_back_displacement)/scint_y_edge_length);
+					center1 = (y_index + 0.5)*scint_y_edge_length + y_back_displacement + z_displacement;
 				} else {
-	    			x_index = (std::floor((+local_position.x() - i*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
+					bar_direction = 1;
+	    			x_index = (std::floor((+local_position.x() - x_module*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
 					y_index = int((local_position.y() - y_back_displacement)/scint_x_edge_length);
+					center1 = x_module*(module_spacing + module_x_edge_length) + (0.5 + x_index)*scint_y_edge_length + y_displacement;
 				}
 				break;//Don't need to check x and y independently
 			}
 		}
 	}
-
-
-  const auto x_name = std::to_string(x_index);
-  const auto x_modName = std::to_string(x_module);
-  const auto y_name = std::to_string(y_index);
-  const auto z_name = std::to_string(z_index);
-  const auto z_modName = std::to_string(z_module);
+// detector ID 
+ int detectorID;
+  if (allignment == 1) { //wall 
+	  if (bar_direction == 0 && layerID < n_wall_layers) {//front walls
+	  	detectorID = x_index + (int)(x_edge_length/scint_x_edge_length)*y_index;
+	  }else if (bar_direction == 1 && layerID < n_wall_layers) {
+	  	detectorID = x_index + (int)(x_edge_length/scint_y_edge_length)*y_index;
+	  } else if (bar_direction == 0) {//back walls
+	  	detectorID = x_index + x_module*(int)(module_x_edge_length/scint_x_edge_length) 
+				   + (int)(sqrt(NMODULES)*module_x_edge_length/scint_x_edge_length)*y_index;
+	  } else {
+	  	detectorID = x_index + x_module*(int)(module_x_edge_length/scint_y_edge_length) 
+				   + (int)(sqrt(NMODULES)*module_x_edge_length/scint_y_edge_length)*y_index;
+	  }
+  } else {
+	  if (bar_direction == 0 && layerID < n_wall_layers + n_floor_layers) {//floors
+	  	detectorID = x_index + (int)(x_edge_length/scint_x_edge_length)*z_index;
+	  }else if (bar_direction == 2 && layerID < n_wall_layers + n_floor_layers) {
+	  	detectorID = x_index + (int)(x_edge_length/scint_y_edge_length)*z_index;
+	  } else if (bar_direction == 0) {//tracking layers
+	  	detectorID = x_index + x_module*(int)(module_x_edge_length/scint_x_edge_length) 
+				   + (int)(sqrt(NMODULES)*module_x_edge_length/scint_x_edge_length)
+		  		   * (z_module*(int)(module_y_edge_length/scint_y_edge_length) + z_index);
+	  } else {
+	  	detectorID = x_index + x_module*(int)(module_x_edge_length/scint_y_edge_length) 
+				   + (int)(sqrt(NMODULES)*module_x_edge_length/scint_y_edge_length)
+		  		   * (z_module*(int)(module_y_edge_length/scint_x_edge_length) + z_index);
+	  }
+  }
+  std::string _id = std::to_string(detectorID) 
+	  + (layerID < 10 ? "0" + std::to_string(layerID) : std::to_string(layerID));
 
   _hit_collection->insert(new Tracking::Hit(
     particle,
     trackID,
     parentID,
-	(x_module < 10UL ? "00" + x_modName : (x_module < 100UL ? "0" + x_modName : x_modName))
-	+ (x_index < 10UL ? "00" + x_name : (x_index < 100UL ? "0" + x_name : x_name))
-	+ (y_index < 10UL ? "00" + y_name : (y_index < 100UL ? "0" + y_name : y_name))
-	+ (z_module < 10UL ? "00" + z_modName : (z_module < 100UL ? "0" + z_modName : z_modName))
-	+ (z_index < 10UL ? "00" + z_name : (z_index < 100UL ? "0" + z_name : z_name)),
+	center1 / Units::Length,
+	center2 / Units::Length,
+	bar_direction,
+	allignment,
+	_id,
     deposit / Units::Energy,
     G4LorentzVector(new_position.t() / Units::Time,   new_position.vect() / Units::Length),
     G4LorentzVector(new_momentum.e() / Units::Energy, new_momentum.vect() / Units::Momentum)));
@@ -383,8 +437,9 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 
 //__Post-Event Processing_______________________________________________________________________
 void Detector::EndOfEvent(G4HCofThisEvent*) {
-  if (_hit_collection->GetSize() == 0)
-    return;  
+  if (_hit_collection->GetSize() == 0){
+      return;
+  }
  
   MuonDataController* controller = MuonDataController::getMuonDataController();
   if(controller->getOn() ==true){
@@ -402,20 +457,9 @@ void Detector::EndOfEvent(G4HCofThisEvent*) {
 
   Analysis::ROOT::DataEntryList root_data;
   root_data.reserve(24UL);
-  root_data.push_back(collection_data[0]);
-  root_data.push_back(collection_data[1]);
-  root_data.push_back(collection_data[2]);
-  root_data.push_back(collection_data[3]);
-  root_data.push_back(collection_data[4]);
-  root_data.push_back(collection_data[5]);
-  root_data.push_back(collection_data[6]);
-  root_data.push_back(collection_data[7]);
-  root_data.push_back(collection_data[8]);
-  root_data.push_back(collection_data[9]);
-  root_data.push_back(collection_data[10]);
-  root_data.push_back(collection_data[11]);
-  root_data.push_back(collection_data[12]);
-  root_data.push_back(collection_data[13]);
+  for (size_t i = 0; i < collection_data.size(); i++) {
+	  root_data.push_back(collection_data[i]);
+  }
 
   const auto gen_particle_data = Tracking::ConvertToAnalysis(GeneratorAction::GetLastEvent(), true);
   const auto extra_gen_data = Tracking::ConvertToAnalysis(GeneratorAction::GetGenerator()->ExtraDetails());
@@ -426,7 +470,6 @@ void Detector::EndOfEvent(G4HCofThisEvent*) {
   metadata.reserve(2UL);
   metadata.push_back(collection_data[0UL].size());
   metadata.push_back(gen_particle_data[0UL].size());
-
   Analysis::ROOT::FillNTuple(DataName, Detector::DataKeyTypes, metadata, root_data);
   if (verboseLevel >= 2 && _hit_collection)
     std::cout << *_hit_collection;

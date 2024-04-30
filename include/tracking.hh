@@ -37,15 +37,34 @@ using HitCollection = G4THitsCollection<Hit>;
 //__Hit Class Definition________________________________________________________________________
 class Hit : public G4VHit {
 public:
-  Hit(const G4ParticleDefinition* particle,
+
+
+//Constructor for using GetTopVolume->GetName()
+	Hit(const G4ParticleDefinition* particle,
+         const int track,
+         const int parent,
+         const std::string& chamber,
+         const double deposit,
+         const G4LorentzVector position,
+         const G4LorentzVector momentum)
+    : G4VHit(), _particle(particle), _trackID(track), _parentID(parent),
+      _chamberID(chamber), _deposit(deposit), _position(position),
+      _momentum(momentum) {}
+
+  Hit(const G4Step* step, bool post=true);
+
+//Constructor for indexing by scintillator bar centers
+	Hit(const G4ParticleDefinition* particle,
       const int track,
       const int parent,
-      const std::string& chamber,
+	  const double center1,
+	  const double center2,
+	  const int bar_direction,
+	  const int allignment,
+	  const std::string& chamberID,
       const double deposit,
       const G4LorentzVector position,
       const G4LorentzVector momentum);
-
-  Hit(const G4Step* step, bool post=true);
 
   void Draw();
   void Print(std::ostream& os=std::cout) const;
@@ -55,6 +74,10 @@ public:
   int                    GetPDGEncoding()  const { return _particle->GetPDGEncoding();  }
   int                    GetTrackID()      const { return _trackID;                     }
   int                    GetParentID()     const { return _parentID;                    }
+  double 				 GetCenter1()	   const { return _center1;						}
+  double 				 GetCenter2()	   const { return _center2;						}
+  int 				 	 GetBarDirection() const { return _bar_direction;               }
+  int					 GetAllignment()   const { return _allignment;					}
   const std::string&     GetChamberID()    const { return _chamberID;                   }
   double                 GetDeposit()      const { return _deposit;                     }
   const G4LorentzVector& GetPosition()     const { return _position;                    }
@@ -77,6 +100,10 @@ private:
   const G4ParticleDefinition* _particle;
   int _trackID;
   int _parentID;
+  double _center1;
+  double _center2;
+  int _bar_direction;
+  int _allignment;
   std::string _chamberID;
   double _deposit;
   G4LorentzVector _position;

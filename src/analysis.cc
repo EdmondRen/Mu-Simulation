@@ -86,8 +86,10 @@ bool CreateNTuple(const std::string& name,
 
   std::size_t vector_count{};
   for (const auto& type : types) {
-    if (type == DataKeyType::Vector)
+	
+    if (type == DataKeyType::Vector){
       ++vector_count;
+	}
   }
 
   DataEntryList data;
@@ -120,8 +122,10 @@ bool FillNTuple(const std::string& name,
 
   auto& data = _ntuple_data[name];
   const auto vector_size = vector_values.size();
-  if (data.size() != vector_size)
-    return false;
+  if (data.size() != vector_size){
+	  std::cout <<"data size" << data.size() << std::endl;
+	  std::cout << "vector size" << vector_size << std::endl;
+    return false;}
 
   for (std::size_t i{}; i < vector_size; ++i)
     data[i] = vector_values[i];
