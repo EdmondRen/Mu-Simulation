@@ -138,8 +138,10 @@ void RunAction::EndOfRunAction(const G4Run*) {
   if (!_event_count)
     return;
 
+  TTree* geom_tree = Construction::Builder::addGeometry();
+  std::cout <<"added geometry" << std::endl;
   Analysis::ROOT::Save();
-
+  std::cout << "saved properly" << std::endl;
   G4AutoLock lock(&_mutex);
 //Place functions within the brackets below if you only want them to run once, or they will run on every worker thread and again at the end
   if (!G4Threading::IsWorkerThread()) {
@@ -151,7 +153,6 @@ void RunAction::EndOfRunAction(const G4Run*) {
       auto chain = new TChain(Construction::Builder::GetDetectorDataName().c_str());
       for (const auto& tag : _worker_tags)
         chain->Add((_prefix + tag).c_str());
-
       TTree* tree = chain;
       file->cd();
       auto clone_tree = tree->CloneTree();
@@ -165,6 +166,7 @@ void RunAction::EndOfRunAction(const G4Run*) {
 
       file->cd();
 
+  	  geom_tree->Write();
       _write_entry(file, "FILETYPE", "MATHULSA MU-SIM DATAFILE");
       _write_entry(file, "DET", Construction::Builder::GetDetectorName());
 

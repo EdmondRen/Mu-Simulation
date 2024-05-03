@@ -76,9 +76,9 @@ public:
 
   static const bool DataPerEvent = true;
   static const std::string& DataName;
+  static const std::string& GeometryName;
   static const Analysis::ROOT::DataKeyList DataKeys;
   static const Analysis::ROOT::DataKeyTypeList DataKeyTypes;
-  static TTree* pre_data;
 
   static G4VPhysicalVolume* Construct(G4LogicalVolume* world);
   static G4VPhysicalVolume* ConstructEarth(G4LogicalVolume* world);
@@ -90,6 +90,7 @@ public:
 
   static void WritePreData();
   static void SaveInfo(std::string & prefix);
+  static TTree* addGeometry();
 };
 
 } /* namespace Box */ //////////////////////////////////////////////////////////////////////////

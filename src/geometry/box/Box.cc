@@ -67,7 +67,6 @@ G4ThreadLocal Tracking::HitCollection* _hit_collection;
 
 //__Box Specification Variables_________________________________________________________________
 
-constexpr int scintillators_per_layer{64};
 constexpr int NMODULES{16};
 constexpr int n_top_layers{4};
 constexpr int n_floor_layers{2};
@@ -119,8 +118,6 @@ constexpr auto layer_w_case = full_layer_height;
 
 constexpr auto full_module_height =  air_gap_decay + 4.0*layer_w_case + 3.0*layer_spacing_top;
 
-constexpr auto scintillator_z_position = 0.00;
-
 constexpr auto wall_height = (2*full_layer_height + layer_spacing + air_gap_decay);
 
 constexpr int NBEAMLAYERS = 4;
@@ -151,7 +148,6 @@ constexpr auto layer_z_world = [](){
 	}
 	return arr;
 }();
-
 
 constexpr auto module_beam_heights = [](){
 	std::array<double, n_top_layers> arr{};
@@ -187,15 +183,100 @@ auto get_layer_z_displacement(int layer_number){
   return -1.0*layer_z_displacement[layer_number];
 }
 
+
 //----------------------------------------------------------------------------------------------
 
 } /* anonymous namespace */ ////////////////////////////////////////////////////////////////////
 
 //__Box Data Variables__________________________________________________________________________
 const std::string& Detector::DataName = "box_run";
+const std::string& Detector::GeometryName = "GEOMETRY";
 const Analysis::ROOT::DataKeyList Detector::DataKeys = Analysis::ROOT::DefaultDataKeyList;
 const Analysis::ROOT::DataKeyTypeList Detector::DataKeyTypes = Analysis::ROOT::DefaultDataKeyTypeList;
 bool Detector::SaveAll = false;
+//----------------------------------------------------------------------------------------------
+
+//__Function to add geometry parameters to the root file________________________________________
+TTree* Detector::addGeometry() {
+	std::vector<double> MODULE_X;
+	std::vector<double> LAYERS_Y;
+	std::vector<double> MODULE_Z;
+	std::vector<double> FLOOR_Y;
+	std::vector<double> WALL_Z;
+	std::vector<double> BACK_Z;
+
+	double x_start = y_displacement / Units::Length;
+	double x_end = (y_displacement + y_edge_length) / Units::Length;
+	double z_start = x_displacement / Units::Length;
+	double z_end = (x_displacement + x_edge_length) / Units::Length;
+	double wall_start = z_displacement / Units::Length;
+	double wall_end = (z_displacement + wall_height) / Units::Length;
+	double back_start = (layer_z_world[n_floor_layers] + z_displacement - module_x_edge_length) / Units::Length;
+	double back_end = (layer_z_world[n_floor_layers] + z_displacement) / Units::Length;
+	double length = scint_x_edge_length / Units::Length;
+	double width = scint_y_edge_length / Units::Length;
+	std::vector<std::string> vec_names = {"MODULE_X","LAYERS_Y","MODULE_Z","FLOOR_Y","WALL_Z","BACK_Z"};
+	std::vector<std::string>  single_names = {"X_START","X_END","Z_START","Z_END","WALL_START","WALL_END","BACK_START","BACK_END",
+	"LENGTH","WIDTH"};
+
+	TTree* geom_tree = new TTree("Geometry", "Geometry");
+
+	geom_tree->Branch("X_START", &x_start);
+	geom_tree->Branch("X_END", &x_end);
+	geom_tree->Branch("Z_START", &z_start);
+	geom_tree->Branch("Z_END", &z_end);
+	geom_tree->Branch("Wall_START", &wall_start);
+	geom_tree->Branch("Wall_END", &wall_end);
+	geom_tree->Branch("BACK_START", &back_start);
+	geom_tree->Branch("BACK_END", &back_end);
+	geom_tree->Branch("LENGTH", &length);
+	geom_tree->Branch("WIDTH", &width);
+	geom_tree->Branch("MODULE_X", &MODULE_X);
+	geom_tree->Branch("LAYERS_Y", &LAYERS_Y);
+	geom_tree->Branch("MODULE_Z", &MODULE_Z);
+	geom_tree->Branch("FLOOR_Y", &FLOOR_Y);
+	geom_tree->Branch("WALL_Z", &WALL_Z);
+	geom_tree->Branch("BACK_Z", &BACK_Z);
+
+	double start;
+	double end;
+	for (size_t i = 0; i < n_wall_layers; i++) {//front wall positions
+		start = (x_displacement - wall_gap - full_layer_height - (n_wall_layers - 1)*(wall_gap2 + full_layer_height)) / Units::Length;
+		start += i*(wall_gap2 + full_layer_height) / Units::Length;
+		WALL_Z.push_back(start);
+		end = start + full_layer_height /Units::Length;
+		WALL_Z.push_back(end);
+	}
+	for (size_t i = 0; i < n_floor_layers + n_top_layers; i++) {//floor/layer positions
+		start = (layer_z_world[i] + z_displacement) / Units::Length;
+		end = start + full_layer_height / Units::Length;
+		if (i < n_floor_layers) {
+			FLOOR_Y.push_back(start);
+			FLOOR_Y.push_back(end);
+		} else {
+			LAYERS_Y.push_back(start);
+			LAYERS_Y.push_back(end);
+		}
+	}
+	for (size_t i = 0; i < int(sqrt(NMODULES)); i++) {//layer modules
+		start = (i*(module_x_edge_length + module_spacing) + x_displacement) / Units::Length;
+		end = start + module_x_edge_length / Units::Length;
+		MODULE_Z.push_back(start);
+		MODULE_Z.push_back(end);
+		start = (i*(module_y_edge_length + module_spacing) + y_displacement)/Units::Length;
+		end = start + module_y_edge_length / Units::Length;
+		MODULE_X.push_back(start);
+		MODULE_X.push_back(end);
+	}
+	for (size_t i = 0; i < n_back_layers; i++) {//back positions
+		start = (x_edge_length + x_displacement + i*(full_layer_height + layer_spacing_top)) / Units::Length;
+		end = start + full_layer_height / Units::Length;
+		BACK_Z.push_back(start);
+		BACK_Z.push_back(end);
+	}
+	geom_tree->Fill();
+	return geom_tree;
+}
 //----------------------------------------------------------------------------------------------
 
 //__Detector Constructor________________________________________________________________________
@@ -248,12 +329,9 @@ void Detector::Initialize(G4HCofThisEvent* event) {
 G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
   const auto deposit = step->GetTotalEnergyDeposit();
 
-
   if (deposit == 0.0L){
-	  //    pre_data->Fill();
     return false;
   }
-
 
 ////////////////////////
   const auto track      = step->GetTrack();
@@ -835,27 +913,6 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 	Construction::PlaceVolume(modified, earth, Earth::SandstoneTransform());
 
 	//PLACE WHOLE THING IN WORLD
-
-	//auto mod = CMS::_calculate_modification("modified_marl", Earth::MarlVolume(),
-	//                      marl_top + Earth::MarlDepth(), marl_top);
-
-
-	////export geometry to gdml files
-	//	Construction::Export(CMSVolume(), folder, file5, arg4 );
-	//	Construction::Export(earth, folder, file4, arg4 );
-
-
-	//// Put Range Cuts on earth volume
-    // G4Region* cut_region = new G4Region("Earth_Cut_Region");
-    // cut_region->AddRootLogicalVolume(earth);
-    // G4ProductionCuts* cuts = new G4ProductionCuts;
-    // cuts->SetProductionCut(1.0*m,G4ProductionCuts::GetIndex("gamma"));
-    // cuts->SetProductionCut(1.0*m,G4ProductionCuts::GetIndex("e-"));
-    // cuts->SetProductionCut(1.0*m,G4ProductionCuts::GetIndex("e+"));
-    // cuts->SetProductionCut(1.0*m,G4ProductionCuts::GetIndex("proton"));
-    // cut_region->SetProductionCuts(cuts);
-
-
 
 	return Construction::PlaceVolume(earth, world, Earth::Transform());
 
