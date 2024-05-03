@@ -353,7 +353,7 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
   //__________________________________________________________________________________________
 
   const auto local_position = new_position.vect() - G4ThreeVector(y_displacement, z_displacement, x_displacement);
- 	
+
  	size_t x_index = 0;
     size_t x_module = 0;	
 	size_t y_index = 0;
@@ -372,7 +372,7 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 		center2 = x_displacement - wall_gap - 0.5*full_layer_height - (n_wall_layers - 1 - z_module)*(full_layer_height + wall_gap2);
 		if (z_module % 2 == 0) {//x is long way
 			bar_direction = 0;
-			y_index = int(abs(local_position.y()/scint_y_edge_length));
+			y_index = int(abs((local_position.y())/scint_y_edge_length));
 			center1 = (0.5+y_index)*scint_y_edge_length + z_displacement;
 			x_index = int(abs(local_position.x()/scint_x_edge_length));
 		} else {
@@ -466,33 +466,35 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 	}
 // detector ID 
  int detectorID;
-  if (allignment == 1) { //wall 
-	  if (bar_direction == 0 && layerID < n_wall_layers) {//front walls
-	  	detectorID = x_index + (int)(x_edge_length/scint_x_edge_length)*y_index;
-	  }else if (bar_direction == 1 && layerID < n_wall_layers) {
-	  	detectorID = x_index + (int)(x_edge_length/scint_y_edge_length)*y_index;
-	  } else if (bar_direction == 0) {//back walls
-	  	detectorID = x_index + x_module*(int)(module_x_edge_length/scint_x_edge_length) 
-				   + (int)(sqrt(NMODULES)*module_x_edge_length/scint_x_edge_length)*y_index;
-	  } else {
-	  	detectorID = x_index + x_module*(int)(module_x_edge_length/scint_y_edge_length) 
-				   + (int)(sqrt(NMODULES)*module_x_edge_length/scint_y_edge_length)*y_index;
+ int n_x, n_z; // number of bars in x/z-direction in one module
+
+  if (allignment == 1) { //walls
+	  if (layerID < n_wall_layers) {//front_walls
+	  	if (bar_direction == 0) n_x = std::ceil(x_edge_length/scint_x_edge_length);
+		else n_x = std::ceil(x_edge_length/scint_y_edge_length);
+	  	detectorID = x_index + n_x*y_index;
+	  } else {//back walls
+		if (bar_direction == 0) n_x = (int)(module_x_edge_length/scint_x_edge_length);
+		else n_x = (int)(module_x_edge_length/scint_y_edge_length);
+	  	detectorID = x_index + x_module*n_x + (int)(sqrt(NMODULES)*n_x*y_index);
 	  }
-  } else {
-	  if (bar_direction == 0 && layerID < n_wall_layers + n_floor_layers) {//floors
-	  	detectorID = x_index + (int)(x_edge_length/scint_x_edge_length)*z_index;
-	  }else if (bar_direction == 2 && layerID < n_wall_layers + n_floor_layers) {
-	  	detectorID = x_index + (int)(x_edge_length/scint_y_edge_length)*z_index;
-	  } else if (bar_direction == 0) {//tracking layers
-	  	detectorID = x_index + x_module*(int)(module_x_edge_length/scint_x_edge_length) 
-				   + (int)(sqrt(NMODULES)*module_x_edge_length/scint_x_edge_length)
-		  		   * (z_module*(int)(module_y_edge_length/scint_y_edge_length) + z_index);
-	  } else {
-	  	detectorID = x_index + x_module*(int)(module_x_edge_length/scint_y_edge_length) 
-				   + (int)(sqrt(NMODULES)*module_x_edge_length/scint_y_edge_length)
-		  		   * (z_module*(int)(module_y_edge_length/scint_x_edge_length) + z_index);
-	  }
-  }
+  } else {//horizontal layers
+	  if (layerID < n_wall_layers + n_floor_layers) {//floors
+	  	if (bar_direction == 0) n_x = std::ceil(x_edge_length/scint_x_edge_length);
+	  	else n_x = std::ceil(x_edge_length/scint_y_edge_length);
+	  	detectorID = x_index + n_x*z_index;
+	  } else {//tracking layers
+		if (bar_direction == 0) {
+			n_x = (int)(module_x_edge_length/scint_x_edge_length);
+			n_z = (int)(module_y_edge_length/scint_y_edge_length);
+		}
+		else {
+			n_x = (int)(module_x_edge_length/scint_y_edge_length);
+			n_z = (int)(module_y_edge_length/scint_x_edge_length);
+		}
+	  	detectorID = x_index + x_module*n_x + (int)(sqrt(NMODULES)*n_x)*(z_module*n_z + z_index);
+  	}
+ }
   std::string _id = std::to_string(detectorID) 
 	  + (layerID < 10 ? "0" + std::to_string(layerID) : std::to_string(layerID));
 
