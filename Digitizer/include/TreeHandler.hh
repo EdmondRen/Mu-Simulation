@@ -341,6 +341,7 @@ public:
 	Double_t BACK_END;
 	Double_t LENGTH;
 	Double_t WIDTH;
+	Double_t THICKNESS;
 	//starts/ends of each module in said dimension
 	std::vector<double> *MODULE_X = nullptr;
 	std::vector<double> *LAYERS_Y = nullptr;
@@ -368,6 +369,7 @@ public:
 	double GetBackEnd(){return BACK_END;}
 	double GetLength(){return LENGTH;}
 	double GetWidth(){return WIDTH;}
+	double GetThickness(){return THICKNESS;}
 	std::vector<double>& GetXModule(){return *MODULE_X;}
 	std::vector<double>& GetYLayers(){return *LAYERS_Y;}
 	std::vector<double>& GetZModule(){return *MODULE_Z;}
@@ -399,6 +401,7 @@ public:
  		InputTree->SetBranchAddress("BACK_END", &BACK_END);
 		InputTree->SetBranchAddress("LENGTH", &LENGTH);
 		InputTree->SetBranchAddress("WIDTH", &WIDTH);
+		InputTree->SetBranchAddress("THICKNESS", &THICKNESS);
 
 		InputTree->SetBranchAddress("MODULE_X", &MODULE_X);
 		InputTree->SetBranchAddress("LAYERS_Y", &LAYERS_Y);

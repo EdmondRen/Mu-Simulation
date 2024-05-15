@@ -215,9 +215,7 @@ TTree* Detector::addGeometry() {
 	double back_end = (layer_z_world[n_floor_layers] + z_displacement) / Units::Length;
 	double length = scint_x_edge_length / Units::Length;
 	double width = scint_y_edge_length / Units::Length;
-	std::vector<std::string> vec_names = {"MODULE_X","LAYERS_Y","MODULE_Z","FLOOR_Y","WALL_Z","BACK_Z"};
-	std::vector<std::string>  single_names = {"X_START","X_END","Z_START","Z_END","WALL_START","WALL_END","BACK_START","BACK_END",
-	"LENGTH","WIDTH"};
+	double thickness = scintillator_height / Units::Length;
 
 	TTree* geom_tree = new TTree("Geometry", "Geometry");
 
@@ -231,6 +229,8 @@ TTree* Detector::addGeometry() {
 	geom_tree->Branch("BACK_END", &back_end);
 	geom_tree->Branch("LENGTH", &length);
 	geom_tree->Branch("WIDTH", &width);
+	geom_tree->Branch("THICKNESS", &thickness);
+
 	geom_tree->Branch("MODULE_X", &MODULE_X);
 	geom_tree->Branch("LAYERS_Y", &LAYERS_Y);
 	geom_tree->Branch("MODULE_Z", &MODULE_Z);

@@ -21,15 +21,8 @@ namespace units{
 
 namespace detector{ 
 	using namespace units;
-	const double ip_x = 0.0;
-	const double ip_y = 0.0;
-	const double ip_z = 0.0;
 
 	const std::vector<double> COSMIC_SHIFT = {0.0, 547*cm, 11950.0*cm}; // shift of sim cosmic -> main coordinates
-	const double scintillator_length = 450.0*units::cm;
-	const double scintillator_width = 4.50*units::cm;
-	const double scintillator_height = 1.6*units::cm;
-	const double scintillator_thickness = 1.0*units::cm; //Just the sensitive part
 	const double time_resolution = 1.0*units::ns;
 
 };

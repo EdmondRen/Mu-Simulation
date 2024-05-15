@@ -5,6 +5,7 @@
 
 
 int main(int argc, char *argv[]){
+	std::cout <<argc << std::endl;
 
 	if (argc < 5) {
 		std::cout << "Usage:" <<std::endl;
@@ -17,14 +18,16 @@ int main(int argc, char *argv[]){
 	TString outdir;
 
 	int i = 1;
+	bool input = false;
 	while (i < argc) {
 		if (strcmp("-l", argv[i]) == 0) {
 			LHCfiles = io::ProcessDirectory(argv[i+1], "");
+			input = true;
 		} else if (strcmp("-c", argv[i]) == 0) {
 			CosmicFiles = io::ProcessDirectory(argv[i+1], "");
 		} else if (strcmp("-o", argv[i]) == 0) {
 			outdir = TString(argv[i+1]);
-		} else {
+		} else if (!input) {
 			std::cout << "Usage:" <<std::endl;
 			std::cout << "-l LHC_directory -c cosmic_directory -o output_dir_name" <<std::endl;
 			return 0;
