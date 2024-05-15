@@ -51,6 +51,7 @@ cd build
 
 if [[ "$CONFIG_CMAKE" -eq 1 ]]; then cmake -DCMAKE_INSTALL_PREFIX=../.temp/sim-install/ ..;   fi;
 if [[ "$CLEAN_BUILD"  -eq 1 ]]; then make clean; fi;
+pwd
 
 make -j8
 make install -j8
