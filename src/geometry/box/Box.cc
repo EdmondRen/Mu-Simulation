@@ -27,23 +27,6 @@ namespace MATHUSLA { namespace MU {
 
 namespace Box { //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// double X_POS_STEP;
-// double Y_POS_STEP;
-// double X_POS_HIT;
-// double Y_POS_HIT;
-
-// TTree* Detector::pre_data = new TTree("pre_data", "pre_data");
-
-// void Detector::WritePreData(){
-
-//   TFile* f = new TFile("box_pre_data.root", "RECREATE");
-//   f->cd();
-
-//   pre_data->Write();
-
-//   f->Write();
-
-//}
 
 namespace Box::CavernConstruction{ ////////////////////////////////////////////////////////////////////////////////////
 
@@ -84,14 +67,16 @@ G4ThreadLocal Tracking::HitCollection* _hit_collection;
 
 //__Box Specification Variables_________________________________________________________________
 
-constexpr int scintillators_per_layer{64};
 constexpr int NMODULES{16};
 constexpr int n_top_layers{4};
+constexpr int n_floor_layers{2};
+constexpr int n_wall_layers{2};
+constexpr int n_back_layers = sqrt(NMODULES);
 constexpr auto x_edge_length = 39.0*m;
 constexpr auto y_edge_length = 39.0*m;
 constexpr auto x_displacement = 100.0*m;
 constexpr auto y_displacement = -19.5*m;
-constexpr auto z_displacement = 6000.0*cm;
+constexpr auto z_displacement = 8547.0*cm;
 
 constexpr auto layer_x_edge_length = 9.0*m;
 constexpr auto layer_y_edge_length = 9.0*m;
@@ -118,17 +103,20 @@ constexpr auto layer_count   = 4UL;
 constexpr auto module_x_edge_length = 9.0*m;
 constexpr auto module_y_edge_length = 9.0*m;
 constexpr auto module_case_thickness = 0.02*m;
+constexpr auto module_spacing = 1.0*m;
 
 constexpr auto full_layer_height = scintillator_height + 2*scintillator_casing_thickness;
 constexpr auto wall_gap = 0.01*m;
 constexpr auto wall_gap2 = 1.0*m;
-constexpr auto x_edge_increase = 4*full_layer_height + 2*wall_gap2 + 4*wall_gap;
+//increase detector volume for walls - symmetric, so its size is not that relevant, so long as it's bigger
+//These are only for the logical volume, so they don't matter too much.
+constexpr auto x_front_wall = 4*full_layer_height + 2*wall_gap2 + 4*wall_gap; //double what you need, since it is symmetric on either side
+constexpr auto x_back_wall = 8*full_layer_height * 8*layer_spacing_top;
+constexpr auto x_edge_increase = x_front_wall + x_back_wall;
 
 constexpr auto layer_w_case = full_layer_height;
 
 constexpr auto full_module_height =  air_gap_decay + 4.0*layer_w_case + 3.0*layer_spacing_top;
-
-constexpr auto scintillator_z_position = 0.00;
 
 constexpr auto wall_height = (2*full_layer_height + layer_spacing + air_gap_decay);
 
@@ -137,72 +125,64 @@ constexpr auto beam_x_edge_length = 0.10*m;
 constexpr auto beam_y_edge_length = 0.10*m;
 constexpr auto beam_thickness = 0.02*m;
 
-constexpr auto full_detector_height = full_module_height + steel_height + 2.0*layer_w_case + 1.0*layer_spacing;
+constexpr auto full_detector_height = full_module_height + steel_height + n_floor_layers*layer_w_case + (n_floor_layers - 1)*layer_spacing;
 constexpr auto half_detector_height = 0.5L * full_detector_height;
 
-constexpr double layer_z_displacement[4] = {-0.5*full_module_height + (12.6*m ) + 0.5*layer_w_case,
-											-0.5*full_module_height + (12.6*m ) + layer_spacing_top + 1.5*layer_w_case,
-											-0.5*full_module_height + (12.6*m ) + 2*layer_spacing_top + 2.5*layer_w_case,
-											-0.5*full_module_height + (12.6*m ) + 3*layer_spacing_top + 3.5*layer_w_case};
+constexpr auto layer_z_displacement = [](){
+	std::array<double, n_top_layers> arr{};
+	for (int i = 0; i < n_top_layers; i++){
+		arr[i] = -0.5*full_module_height + air_gap_decay + i*layer_spacing_top + (i + 0.5)*layer_w_case;
+	}
+	return arr;
+}();
 
-// The z distance from the TOP of the floor layer to the BOTTOM of the middle layer
-constexpr double floor_z_top = - layer_spacing - 2*layer_w_case;
-// The z coordinates of the BOTTOM of all layers in the world
-constexpr double layer_z_world[6] = {floor_z_top +layer_spacing+2.*layer_w_case,
-                                      floor_z_top +layer_w_case,
-                                      -(layer_z_displacement[0]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
-                                      -(layer_z_displacement[1]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
-                                      -(layer_z_displacement[2]+0.5*full_module_height-floor_z_top-0.5*layer_w_case),
-                                      -(layer_z_displacement[3]+0.5*full_module_height-floor_z_top-0.5*layer_w_case)
-};                      
+// The z coordinates of the BOTTOM of all layers in the world (from the ground)
+constexpr auto layer_z_world = [](){
+	std::array<double, n_top_layers + n_floor_layers> arr{};
+	for (int i = 0; i < n_floor_layers; i++){
+		arr[i] = steel_height + i*(layer_spacing + layer_w_case);
+	}
+	for (int i = n_floor_layers; i < n_floor_layers + n_top_layers; i++){
+		arr[i] = steel_height + n_floor_layers*layer_w_case + (n_floor_layers - 1)*layer_spacing; //The bottom floor part
+		arr[i] = arr[i] + air_gap_decay + (i-n_floor_layers)*(layer_spacing + layer_w_case);
+	}
+	return arr;
+}();
 
+constexpr auto module_beam_heights = [](){
+	std::array<double, n_top_layers> arr{};
+	for (int i=0; i < n_top_layers; i++){
+		if (i==0){arr[i] = air_gap_decay;}
+		else {arr[i] = layer_spacing_top;}
+	}
+	return arr;
+}();
 
-constexpr double module_beam_heights[4] = {12.6*m,
-										   layer_spacing_top,
-										   layer_spacing_top,
-										   layer_spacing_top};
+constexpr auto module_beam_z_pos = [](){
+	std::array<double, n_top_layers> arr{};
+	for (int i=0; i < n_top_layers; i++){
+		arr[i] = -0.5*full_module_height + i*layer_w_case + 0.5*module_beam_heights[i];
+		if (i > 0){arr[i] += (i-1)*layer_spacing_top + air_gap_decay;}
+	}
+	return arr;
+}();
 
-	// constexpr double module_beam_z_pos[9] = {-0.50*full_module_height + 0.50*module_beam_heights[0] + layer_w_case,
-	//                                          -0.50*full_module_height + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[1],
-	//                                          -0.50*full_module_height + 3*layer_w_case + 2*layer_spacing + 0.50*module_beam_heights[2],
-	//                                          -0.50*full_module_height + 20.0*m + layer_w_case + 0.50*module_beam_heights[3],
-	//                                          -0.50*full_module_height + 20.0*m + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[4],
-	//                                          -0.50*full_module_height + 25.0*m + layer_w_case + 0.50*module_beam_heights[5],
-	//                                          -0.50*full_module_height + 25.0*m + 2*layer_w_case + layer_spacing + 0.50*module_beam_heights[6],
-	//                                          -0.50*full_module_height + 25.0*m + 3*layer_w_case + 2*layer_spacing + 0.50*module_beam_heights[7],
-	//                                          -0.50*full_module_height + 25.0*m + 4*layer_w_case + 3*layer_spacing + 0.50*module_beam_heights[8]};
-
-constexpr double module_beam_z_pos[4] = {-0.50*full_module_height + 0.50*module_beam_heights[0],
-										 -0.50*full_module_height + 12.6*m  + 1*layer_w_case + 0.50*module_beam_heights[1],
-										 -0.50*full_module_height + 12.6*m  + 2*layer_w_case + 1*layer_spacing_top + 0.50*module_beam_heights[2],
-										 -0.50*full_module_height + 12.6*m  + 3*layer_w_case + 2*layer_spacing_top + 0.50*module_beam_heights[3]};
-
-
-
-// const std::string folder = "detector_geo";
-// const std::string file = "box.gdml";
-// const std::string file2 ="mod.gdml";
-// const std::string file3 ="layer.gdml";
-// const std::string file4 ="earth.gdml";
-// const std::string file5 ="modified.gdml";
-// const std::string arg4 = "http://service-spi.web.cern.ch/service-spi/app/releases/GDML/Schema/gdml.xsd";
-
-
+//Returns the LOWEST position value of each module
 auto get_module_x_displacement(int tag_number){
-  if (tag_number < 4) return -0.5 * x_edge_length + 0.5*module_x_edge_length;
-  else if (tag_number < 8) return -0.5*x_edge_length + 0.5*module_x_edge_length + 1.00*(module_x_edge_length + 1.0*m );
-  else if (tag_number < 12) return -0.5*x_edge_length + 0.5*module_x_edge_length + 2.00*(module_x_edge_length + 1.0*m );
-  else if (tag_number < 16) return -0.5*x_edge_length + 0.5*module_x_edge_length + 3.00*(module_x_edge_length + 1.0*m );
-  else return -0.5*x_edge_length + 0.5*module_x_edge_length + 4.00*(module_x_edge_length + 1.0*m );
+	int step = int(sqrt(NMODULES));
+	return -0.5*x_edge_length + 0.5*module_x_edge_length + int(tag_number / step)*(module_x_edge_length + module_spacing);
 }
 
+
 auto get_module_y_displacement(int tag_number){
-  return (((double) (tag_number % 4))*(module_y_edge_length + 1.0*m) -0.5 * y_edge_length + 0.5*module_y_edge_length   );
+	int step = int(sqrt(NMODULES));
+  return double(tag_number % step)*(module_y_edge_length + module_spacing) -0.5 * y_edge_length + 0.5*module_y_edge_length;
 }
 
 auto get_layer_z_displacement(int layer_number){
   return -1.0*layer_z_displacement[layer_number];
 }
+
 
 //----------------------------------------------------------------------------------------------
 
@@ -210,9 +190,93 @@ auto get_layer_z_displacement(int layer_number){
 
 //__Box Data Variables__________________________________________________________________________
 const std::string& Detector::DataName = "box_run";
+const std::string& Detector::GeometryName = "GEOMETRY";
 const Analysis::ROOT::DataKeyList Detector::DataKeys = Analysis::ROOT::DefaultDataKeyList;
 const Analysis::ROOT::DataKeyTypeList Detector::DataKeyTypes = Analysis::ROOT::DefaultDataKeyTypeList;
 bool Detector::SaveAll = false;
+//----------------------------------------------------------------------------------------------
+
+//__Function to add geometry parameters to the root file________________________________________
+TTree* Detector::addGeometry() {
+	std::vector<double> MODULE_X;
+	std::vector<double> LAYERS_Y;
+	std::vector<double> MODULE_Z;
+	std::vector<double> FLOOR_Y;
+	std::vector<double> WALL_Z;
+	std::vector<double> BACK_Z;
+
+	double x_start = y_displacement / Units::Length;
+	double x_end = (y_displacement + y_edge_length) / Units::Length;
+	double z_start = x_displacement / Units::Length;
+	double z_end = (x_displacement + x_edge_length) / Units::Length;
+	double wall_start = z_displacement / Units::Length;
+	double wall_end = (z_displacement + wall_height) / Units::Length;
+	double back_start = (layer_z_world[n_floor_layers] + z_displacement - module_x_edge_length) / Units::Length;
+	double back_end = (layer_z_world[n_floor_layers] + z_displacement) / Units::Length;
+	double length = scint_x_edge_length / Units::Length;
+	double width = scint_y_edge_length / Units::Length;
+	double thickness = scintillator_height / Units::Length;
+
+	TTree* geom_tree = new TTree("Geometry", "Geometry");
+
+	geom_tree->Branch("X_START", &x_start);
+	geom_tree->Branch("X_END", &x_end);
+	geom_tree->Branch("Z_START", &z_start);
+	geom_tree->Branch("Z_END", &z_end);
+	geom_tree->Branch("Wall_START", &wall_start);
+	geom_tree->Branch("Wall_END", &wall_end);
+	geom_tree->Branch("BACK_START", &back_start);
+	geom_tree->Branch("BACK_END", &back_end);
+	geom_tree->Branch("LENGTH", &length);
+	geom_tree->Branch("WIDTH", &width);
+	geom_tree->Branch("THICKNESS", &thickness);
+
+	geom_tree->Branch("MODULE_X", &MODULE_X);
+	geom_tree->Branch("LAYERS_Y", &LAYERS_Y);
+	geom_tree->Branch("MODULE_Z", &MODULE_Z);
+	geom_tree->Branch("FLOOR_Y", &FLOOR_Y);
+	geom_tree->Branch("WALL_Z", &WALL_Z);
+	geom_tree->Branch("BACK_Z", &BACK_Z);
+
+	double start;
+	double end;
+	for (size_t i = 0; i < n_wall_layers; i++) {//front wall positions
+		start = (x_displacement - wall_gap - full_layer_height - (n_wall_layers - 1)*(wall_gap2 + full_layer_height)) / Units::Length;
+		start += i*(wall_gap2 + full_layer_height) / Units::Length;
+		WALL_Z.push_back(start);
+		end = start + full_layer_height /Units::Length;
+		WALL_Z.push_back(end);
+	}
+	for (size_t i = 0; i < n_floor_layers + n_top_layers; i++) {//floor/layer positions
+		start = (layer_z_world[i] + z_displacement) / Units::Length;
+		end = start + full_layer_height / Units::Length;
+		if (i < n_floor_layers) {
+			FLOOR_Y.push_back(start);
+			FLOOR_Y.push_back(end);
+		} else {
+			LAYERS_Y.push_back(start);
+			LAYERS_Y.push_back(end);
+		}
+	}
+	for (size_t i = 0; i < int(sqrt(NMODULES)); i++) {//layer modules
+		start = (i*(module_x_edge_length + module_spacing) + x_displacement) / Units::Length;
+		end = start + module_x_edge_length / Units::Length;
+		MODULE_Z.push_back(start);
+		MODULE_Z.push_back(end);
+		start = (i*(module_y_edge_length + module_spacing) + y_displacement)/Units::Length;
+		end = start + module_y_edge_length / Units::Length;
+		MODULE_X.push_back(start);
+		MODULE_X.push_back(end);
+	}
+	for (size_t i = 0; i < n_back_layers; i++) {//back positions
+		start = (x_edge_length + x_displacement + i*(full_layer_height + layer_spacing_top)) / Units::Length;
+		end = start + full_layer_height / Units::Length;
+		BACK_Z.push_back(start);
+		BACK_Z.push_back(end);
+	}
+	geom_tree->Fill();
+	return geom_tree;
+}
 //----------------------------------------------------------------------------------------------
 
 //__Detector Constructor________________________________________________________________________
@@ -265,26 +329,9 @@ void Detector::Initialize(G4HCofThisEvent* event) {
 G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
   const auto deposit = step->GetTotalEnergyDeposit();
 
-  //const auto step_point = step->GetPreStepPoint();
-  //const auto position   = G4LorentzVector(step_point->GetGlobalTime(), step_point->GetPosition());
-  // X_POS_STEP = position.x();
-  // Y_POS_STEP = position.y();
-  // X_POS_HIT = 0.0;
-  // Y_POS_HIT = 0.0;
-
   if (deposit == 0.0L){
-	  //    pre_data->Fill();
     return false;
   }
-
-  // X_POS_HIT = position.x();
-  // Y_POS_HIT = position.y();
-  // pre_data->Fill();
-  // const auto track      = step->GetTrack();
-  // const auto particle   = track->GetParticleDefinition();
-  // const auto trackID    = track->GetTrackID();
-  // const auto parentID   = track->GetParentID();
-  // const auto momentum   = G4LorentzVector(step_point->GetTotalEnergy(), step_point->GetMomentum());
 
 ////////////////////////
   const auto track      = step->GetTrack();
@@ -307,148 +354,159 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 
   const auto local_position = new_position.vect() - G4ThreeVector(y_displacement, z_displacement, x_displacement);
 
-  // auto z_index = static_cast<size_t>(std::floor(+local_position.y() / (layer_spacing + scintillator_height)));
-  size_t y_index = 0;
+ 	size_t x_index = 0;
+    size_t x_module = 0;	
+	size_t y_index = 0;
+	size_t y_module = 0;
+	size_t z_index = 0;
+	size_t z_module = 0;
+	size_t bar_direction = 0; //0-x,1-y,2-z
+	size_t normal = 0; //0-x,1-y,2-z
+	size_t layerID = 0;
+	double  center1 = 0; //stored
+	double center2 = 0;//stored
+	if (local_position.z() < 0) { // It is the front wall layer
+		normal = 2;
+		z_module = n_wall_layers - 1 - int(abs(local_position.z()/wall_gap2));
+		layerID = z_module;
+		center2 = x_displacement - wall_gap - 0.5*full_layer_height - (n_wall_layers - 1 - z_module)*(full_layer_height + wall_gap2);
+		if (z_module % 2 == 0) {//x is long way
+			bar_direction = 0;
+			y_index = int(abs((local_position.y())/scint_y_edge_length));
+			center1 = (0.5+y_index)*scint_y_edge_length + z_displacement;
+			x_index = int(abs(local_position.x()/scint_x_edge_length));
+		} else {
+			bar_direction = 1;
+			y_index = int(abs(local_position.y()/scint_x_edge_length));
+			x_index = int(abs(local_position.x()/scint_y_edge_length));
+			center1 =(0.5+x_index)*scint_y_edge_length + y_displacement;
+		}
 
-//  if (new_position.y() < 6050.0L*cm) {
-//    y_index = static_cast<std::size_t>(std::floor(+local_position.y() / (layer_spacing + scintillator_height)));
-//  } else if (new_position.y() > 6060.0L*cm && new_position.y() < 6150.0L*cm) {
-//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1.0L*cm) / (layer_spacing + scintillator_height)));
-//  } else if (new_position.y() > 7900.0L*cm && new_position.y() < 8050.0L*cm) {
-//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1796.0L*cm) / (layer_spacing + scintillator_height)));
-//  } else if (new_position.y() > 8050.0L*cm && new_position.y() < 8150.0L*cm) {
-//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1797.0L*cm) / (layer_spacing + scintillator_height)));
-//  } else if (new_position.y() > 8400.0L*cm && new_position.y() < 8550.0L*cm) {
-//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2092.0L*cm) / (layer_spacing + scintillator_height)));
-//  } else if (new_position.y() > 8560.0L*cm && new_position.y() < 8650.0L*cm) {
-//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2093.0L*cm) / (layer_spacing + scintillator_height)));
-// } else if (new_position.y() > 8660.0L*cm && new_position.y() < 8750.0L*cm) {
-//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2094.0L*cm) / (layer_spacing + scintillator_height)));
-//  } else if (new_position.y() > 8760.0L*cm && new_position.y() < 8850.0L*cm) {
-//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2095.0L*cm) / (layer_spacing + scintillator_height)));
-//  } else {
-//    y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 2096.0L*cm) / (layer_spacing + scintillator_height)));
- // }
+  	} else if (local_position.z() < x_edge_length) { // It is in the main detector (horizontal layers)
+		normal = 1;
+		for (int i = 0; i < n_top_layers + n_floor_layers; i++){
+			if (local_position.y() >= layer_z_world[i] && local_position.y() <= layer_z_world[i] + layer_w_case){
+				y_module = i;
+				break;
+			}
+		}
+		bool x_long = y_module % 2; // Even -> x-direction is long
 
-   if (new_position.y() >= 8550.0L*cm && new_position.y() <= 8551.6L*cm) {
-    y_index = static_cast<std::size_t>(std::floor(+local_position.y() / (layer_spacing + scintillator_height)));
-   } else if (new_position.y() >= 8631.6L*cm && new_position.y() <= 8633.2L*cm) {
-	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 100.0L*cm) / (layer_spacing + scintillator_height)));
-   } else if (new_position.y() >= 9893.2L*cm && new_position.y() <= 9894.8L*cm) {
-	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1702.6L*cm) / (layer_spacing + scintillator_height)));
-   } else if (new_position.y() >= 9974.8L*cm && new_position.y() <= 9976.4L*cm) {
-	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1702.6L*cm +80.0L*cm) / (layer_spacing + scintillator_height)));
-   } else if (new_position.y() >= 10056.4L*cm && new_position.y() <= 10058.0L*cm) {
-	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1702.6L*cm +2*80.0L*cm) / (layer_spacing + scintillator_height)));
-   } else if (new_position.y() >= 10138.0L*cm && new_position.y() <= 10139.6L*cm) {
-	   y_index = static_cast<std::size_t>(std::floor((+local_position.y() - 1702.6L*cm +3*80.0L*cm) / (layer_spacing + scintillator_height)));
-  }
+		if (y_module < n_floor_layers) { //In the floor
+			layerID = y_module + n_wall_layers;
+			if (x_long == 0) {
+				bar_direction = 0;
+				z_index = int(local_position.z()/scint_y_edge_length);
+				center2 = (z_index+ 0.5)*scint_y_edge_length + x_displacement;
+				x_index = int(local_position.x()/scint_x_edge_length);
+				center1 = layer_z_world[y_module] + z_displacement + 0.5*full_layer_height;
+			} else {
+				bar_direction = 2;
+				z_index = int(local_position.z()/scint_x_edge_length);
+				x_index = int(local_position.x()/scint_y_edge_length);
+				center1 = (x_index+ 0.5)*scint_y_edge_length + y_displacement;
+				center2 = layer_z_world[y_module] + z_displacement + 0.5*full_layer_height;
+			}
+		} else {//Main  detection layers
+			layerID = y_module + n_wall_layers;
+			for (int i = 0; i < int(sqrt(NMODULES)); i++){
+				//Taking advantage of square symmetry: iterate through x/z simultaneously
+				auto coord = get_module_y_displacement(i) + 0.5*(y_edge_length-module_y_edge_length);//back corner of module
+				if ((local_position.x() >= coord && local_position.x() <= coord + module_x_edge_length)){
+					x_module = i;
+					if (x_long == 1) {//x is short
+						bar_direction = 2;
+	    				x_index = (std::floor((+local_position.x() - x_module*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
+						center1 = x_module*(module_spacing + module_x_edge_length) + (0.5 + x_index)*scint_y_edge_length + y_displacement;
+						center2 = layer_z_world[y_module] + z_displacement + 0.5*full_layer_height;
+					} else {//x is long
+	    				x_index = (std::floor((+local_position.x() - x_module*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
+					}
+				}
+				if (local_position.z() >= coord && local_position.z() <= coord + module_y_edge_length){
+					z_module = i;
+					if (x_long == 0) {//so z is short
+						bar_direction = 0;
+	    				z_index = (std::floor((+local_position.z() - z_module*(module_spacing + module_y_edge_length))/(scint_y_edge_length)));
+						center2 = z_module*(module_spacing + module_y_edge_length) + (0.5 + z_index)*scint_y_edge_length + x_displacement;
+						center1 = layer_z_world[y_module] + z_displacement + 0.5*full_layer_height;
+					} else {
+	    				z_index = (std::floor((+local_position.z() - z_module*(module_spacing + module_y_edge_length))/(scint_x_edge_length)));
+					}
+				}
+			}
+		}
 
-  int _rotation = (1UL + y_index) % 2;
-  size_t x_index = 0;
-  size_t z_index = 0;
+  	} else if (local_position.z() > x_edge_length) { // It is in the back wall
+		normal = 2;
+		z_module = int((local_position.z()-x_edge_length)/(layer_w_case + layer_spacing_top));
+		center2 = z_module*(layer_w_case + layer_spacing_top) + 0.5*layer_w_case + x_edge_length + x_displacement;
+		layerID = z_module + n_wall_layers + n_floor_layers + sqrt(NMODULES);
+		bool x_long = z_module % 2; // Even -> x-direction is long
+		//BOTTOM of back wall = First top layer - module's dimension
+		double y_back_displacement = layer_z_world[n_floor_layers] - module_x_edge_length; 
+		for (int i = 0; i < int(sqrt(NMODULES)); i++){
+			auto coord = get_module_y_displacement(i) + 0.5*(y_edge_length-module_y_edge_length);
+			if (local_position.x() >= coord && local_position.x() <= coord + module_x_edge_length){
+				x_module = i;
+				if (x_long == 0) {
+					bar_direction = 0;
+		    		x_index = (std::floor((+local_position.x() - x_module*(module_spacing + module_x_edge_length))/(scint_x_edge_length)));
+					y_index = int((local_position.y() - y_back_displacement)/scint_y_edge_length);
+					center1 = (y_index + 0.5)*scint_y_edge_length + y_back_displacement + z_displacement;
+				} else {
+					bar_direction = 1;
+	    			x_index = (std::floor((+local_position.x() - x_module*(module_spacing + module_x_edge_length))/(scint_y_edge_length)));
+					y_index = int((local_position.y() - y_back_displacement)/scint_x_edge_length);
+					center1 = x_module*(module_spacing + module_x_edge_length) + (0.5 + x_index)*scint_y_edge_length + y_displacement;
+				}
+				break;//Don't need to check x and y independently
+			}
+		}
+	}
+// detector ID 
+ int detectorID;
+ int n_x, n_z; // number of bars in x/z-direction in one module
 
-  if (_rotation == 0){
-
-	  if (new_position.x() >= -1950.0L*cm && new_position.x() <= -1050.0L*cm) {
-		  x_index = static_cast<std::size_t>(std::floor(+local_position.x() / (scint_y_edge_length) ));
-	  } else if (new_position.x() >= -950.0L*cm && new_position.x() <= -50.0L*cm) {
-		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 100.0L*cm) / (scint_y_edge_length) ));
-	  } else if (new_position.x() >= 50.0L*cm && new_position.x() <= 950.0L*cm) {
-		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 200.0L*cm) / (scint_y_edge_length) ));
-	  } else if (new_position.x() >= 1050.0L*cm && new_position.x() <= 1950.0L*cm) {
-		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 300.0L*cm) / (scint_y_edge_length) ));
-	  //} else if (new_position.x() >= -950.0L*cm && new_position.x() <= -50.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 400.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.x() >= 50.0L*cm && new_position.x() <= 950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 500.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.x() >= 1050.0L*cm && new_position.x() <= 1950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 600.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.x() >= 2050.0L*cm && new_position.x() <= 2950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 700.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.x() >= 3050.0L*cm && new_position.x() <= 3950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 800.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.x() >= 4050.0L*cm && new_position.x() <= 4950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 900.0L*cm) / (scint_y_edge_length) ));
+  if (normal == 2) { //walls
+	  if (layerID < n_wall_layers) {//front_walls
+	  	if (bar_direction == 0) n_x = std::ceil(x_edge_length/scint_x_edge_length);
+		else n_x = std::ceil(x_edge_length/scint_y_edge_length);
+	  	detectorID = x_index + n_x*y_index;
+	  } else {//back walls
+		if (bar_direction == 0) n_x = (int)(module_x_edge_length/scint_x_edge_length);
+		else n_x = (int)(module_x_edge_length/scint_y_edge_length);
+	  	detectorID = x_index + x_module*n_x + (int)(sqrt(NMODULES)*n_x*y_index);
 	  }
-	  if (new_position.z() >= 7000.0L*cm && new_position.z() <= 7900L*cm) {
-		  z_index = static_cast<std::size_t>(std::floor(+local_position.z() / (scint_x_edge_length) ));
-	  } else if (new_position.z() >= 8000.0L*cm && new_position.z() <= 8900.0L*cm) {
-		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 100.0L*cm) / (scint_x_edge_length) ));
-	  } else if (new_position.z() >= 9000.0L*cm && new_position.z() <= 9900.0L*cm) {
-		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 200.0L*cm) / (scint_x_edge_length) ));
-	  } else if (new_position.z() >= 10000.0L*cm && new_position.z() <= 10900.0L*cm) {
-		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 300.0L*cm) / (scint_x_edge_length) ));
-	  //} else if (new_position.z() >= 11000.0L*cm && new_position.z() <= 11900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 400.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.z() >= 12000.0L*cm && new_position.z() <= 12900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 500.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.z() >= 13000.0L*cm && new_position.z() <= 13900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 600.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.z() >= 14000.0L*cm && new_position.z() <= 14900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 700.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.z() >= 15000.0L*cm && new_position.z() <= 15900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 800.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.z() >= 16000.0L*cm && new_position.z() <= 16900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 900.0L*cm) / (scint_x_edge_length) ));
-	  }
-
-  } else if (_rotation == 1){
-
-	  if (new_position.x() >= -1950.0L*cm && new_position.x() <= -1050.0L*cm) {
-		  x_index = static_cast<std::size_t>(std::floor(+local_position.x() / (scint_y_edge_length) ));
-	  } else if (new_position.x() >= -950.0L*cm && new_position.x() <= -50.0L*cm) {
-		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 100.0L*cm) / (scint_y_edge_length) ));
-	  } else if (new_position.x() >= 50.0L*cm && new_position.x() <= 950.0L*cm) {
-		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 200.0L*cm) / (scint_y_edge_length) ));
-	  } else if (new_position.x() >= 1050.0L*cm && new_position.x() <= 1950.0L*cm) {
-		  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 300.0L*cm) / (scint_y_edge_length) ));
-	  //} else if (new_position.x() >= -950.0L*cm && new_position.x() <= -50.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 400.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.x() >= 50.0L*cm && new_position.x() <= 950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 500.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.x() >= 1050.0L*cm && new_position.x() <= 1950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 600.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.x() >= 2050.0L*cm && new_position.x() <= 2950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 700.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.x() >= 3050.0L*cm && new_position.x() <= 3950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 800.0L*cm) / (scint_x_edge_length) ));
-	 // } else if (new_position.x() >= 4050.0L*cm && new_position.x() <= 4950.0L*cm) {
-	//	  x_index = static_cast<std::size_t>(std::floor((+local_position.x() - 900.0L*cm) / (scint_x_edge_length) ));
-	  }
-	  if (new_position.z() >= 7000.0L*cm && new_position.z() <= 7900L*cm) {
-		  z_index = static_cast<std::size_t>(std::floor(+local_position.z() / (scint_x_edge_length) ));
-	  } else if (new_position.z() >= 8000.0L*cm && new_position.z() <= 8900.0L*cm) {
-		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 100.0L*cm) / (scint_y_edge_length) ));
-	  } else if (new_position.z() >= 9000.0L*cm && new_position.z() <= 9900.0L*cm) {
-		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 200.0L*cm) / (scint_y_edge_length) ));
-	  } else if (new_position.z() >= 10000.0L*cm && new_position.z() <= 10900.0L*cm) {
-		  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 300.0L*cm) / (scint_y_edge_length) ));
-	  //} else if (new_position.z() >= 11000.0L*cm && new_position.z() <= 11900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 400.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.z() >= 12000.0L*cm && new_position.z() <= 12900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 500.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.z() >= 13000.0L*cm && new_position.z() <= 13900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 600.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.z() >= 14000.0L*cm && new_position.z() <= 14900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 700.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.z() >= 15000.0L*cm && new_position.z() <= 15900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 800.0L*cm) / (scint_y_edge_length) ));
-	 // } else if (new_position.z() >= 16000.0L*cm && new_position.z() <= 16900.0L*cm) {
-	//	  z_index = static_cast<std::size_t>(std::floor((+local_position.z() - 900.0L*cm) / (scint_y_edge_length) ));
-	  }
-  }
-
-  const auto x_name = std::to_string(x_index);
-  const auto z_name = std::to_string(z_index);
+  } else {//horizontal layers
+	  if (layerID < n_wall_layers + n_floor_layers) {//floors
+	  	if (bar_direction == 0) n_x = std::ceil(x_edge_length/scint_x_edge_length);
+	  	else n_x = std::ceil(x_edge_length/scint_y_edge_length);
+	  	detectorID = x_index + n_x*z_index;
+	  } else {//tracking layers
+		if (bar_direction == 0) {
+			n_x = (int)(module_x_edge_length/scint_x_edge_length);
+			n_z = (int)(module_y_edge_length/scint_y_edge_length);
+		}
+		else {
+			n_x = (int)(module_x_edge_length/scint_y_edge_length);
+			n_z = (int)(module_y_edge_length/scint_x_edge_length);
+		}
+	  	detectorID = x_index + x_module*n_x + (int)(sqrt(NMODULES)*n_x)*(z_module*n_z + z_index);
+  	}
+ }
+  std::string _id = std::to_string(detectorID) 
+	  + (layerID < 10 ? "0" + std::to_string(layerID) : std::to_string(layerID));
 
   _hit_collection->insert(new Tracking::Hit(
     particle,
     trackID,
     parentID,
-	std::to_string(1UL + y_index)
-    + (z_index < 10UL ? "000" + z_name : (z_index < 100UL ? "00" + z_name : (z_index < 1000UL ? "0" + z_name : z_name)))
-	+ (x_index < 10UL ? "000" + x_name : (x_index < 100UL ? "00" + x_name : (x_index < 1000UL ? "0" + x_name : x_name))),
+	center1 / Units::Length,
+	center2 / Units::Length,
+	bar_direction,
+	normal,
+	_id,
     deposit / Units::Energy,
     G4LorentzVector(new_position.t() / Units::Time,   new_position.vect() / Units::Length),
     G4LorentzVector(new_momentum.e() / Units::Energy, new_momentum.vect() / Units::Momentum)));
@@ -459,8 +517,9 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 
 //__Post-Event Processing_______________________________________________________________________
 void Detector::EndOfEvent(G4HCofThisEvent*) {
-  if (_hit_collection->GetSize() == 0)
-    return;  
+  if (_hit_collection->GetSize() == 0){
+      return;
+  }
  
   MuonDataController* controller = MuonDataController::getMuonDataController();
   if(controller->getOn() ==true){
@@ -478,20 +537,9 @@ void Detector::EndOfEvent(G4HCofThisEvent*) {
 
   Analysis::ROOT::DataEntryList root_data;
   root_data.reserve(24UL);
-  root_data.push_back(collection_data[0]);
-  root_data.push_back(collection_data[1]);
-  root_data.push_back(collection_data[2]);
-  root_data.push_back(collection_data[3]);
-  root_data.push_back(collection_data[4]);
-  root_data.push_back(collection_data[5]);
-  root_data.push_back(collection_data[6]);
-  root_data.push_back(collection_data[7]);
-  root_data.push_back(collection_data[8]);
-  root_data.push_back(collection_data[9]);
-  root_data.push_back(collection_data[10]);
-  root_data.push_back(collection_data[11]);
-  root_data.push_back(collection_data[12]);
-  root_data.push_back(collection_data[13]);
+  for (size_t i = 0; i < collection_data.size(); i++) {
+	  root_data.push_back(collection_data[i]);
+  }
 
   const auto gen_particle_data = Tracking::ConvertToAnalysis(GeneratorAction::GetLastEvent(), true);
   const auto extra_gen_data = Tracking::ConvertToAnalysis(GeneratorAction::GetGenerator()->ExtraDetails());
@@ -502,7 +550,6 @@ void Detector::EndOfEvent(G4HCofThisEvent*) {
   metadata.reserve(2UL);
   metadata.push_back(collection_data[0UL].size());
   metadata.push_back(gen_particle_data[0UL].size());
-
   Analysis::ROOT::FillNTuple(DataName, Detector::DataKeyTypes, metadata, root_data);
   if (verboseLevel >= 2 && _hit_collection)
     std::cout << *_hit_collection;
@@ -524,7 +571,6 @@ G4VPhysicalVolume* Detector::ConstructScintillatorLayer(G4LogicalVolume* ModuleV
       UNUSED(module_y_displacement);
 
   return current->PlaceIn(ModuleVolume, G4Translate3D(0.0, 0.0, layer_z_displacement) );
-  //G4Translate3D(0.5*layer_x_edge_length, 0.5*layer_y_edge_length, layer_z_displacement)
 }
 
 G4VPhysicalVolume* Detector::ConstructShelf(G4LogicalVolume* ModuleVolume, int module_number, int layer_number, dimension module_x_displacement, dimension module_y_displacement, dimension layer_z_displacement){
@@ -535,17 +581,11 @@ G4VPhysicalVolume* Detector::ConstructShelf(G4LogicalVolume* ModuleVolume, int m
 																				-0.50*module_y_edge_length + 0.50*shelf_y_edge_length,
 																				 layer_z_displacement + 0.5*layer_w_case +0.5*shelf_thickness));
 
-  //G4Translate3D(0.5*layer_x_edge_length, 0.5*layer_y_edge_length, layer_z_displacement)
 }
 
 G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, int tag_number, dimension detector_x, dimension detector_y, dimension detector_z){
 
 	auto ModuleVolume = Construction::BoxVolume("Module" + std::to_string(tag_number), module_x_edge_length + module_case_thickness, module_y_edge_length + module_case_thickness, full_module_height);
-
-	// auto ModuleCaseVolume = Construction::OpenBoxVolume("Module" + std::to_string(tag_number) + "_Case", module_x_edge_length, module_y_edge_length, full_module_height,
-	//                                                 module_case_thickness, Construction::Material::Iron, *ModuleVisAttr());
-
-	// Construction::PlaceVolume(ModuleCaseVolume, ModuleVolume, Construction::Transform(0.0, 0.0, 0.0));
 
 
 	for (std::size_t layer{}; layer < layer_count; ++layer) {
@@ -590,40 +630,56 @@ G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, in
 	}
 
 
-	// if (tag_number == 0) {
-	// 	std::cout << "ABOUT TO WRITE GDML FOR MODULE" << std::endl;
-	// 	Construction::Export(ModuleVolume, folder, file2, arg4 );
-	// }
-
-
     return Construction::PlaceVolume(ModuleVolume, DetectorVolume,
 									 Construction::Transform(get_module_x_displacement(tag_number),
 															 get_module_y_displacement(tag_number),
-                                                             half_detector_height - steel_height - 2.0*layer_w_case - 1*layer_spacing  - 0.5*full_module_height,
+                                                             half_detector_height - steel_height - n_floor_layers*layer_w_case - (n_floor_layers -1)*layer_spacing  - 0.5*full_module_height,
 															 0.0, 0.0, 1.0, 0.0));
 
 
+}
+
+G4VPhysicalVolume* Detector::ConstructWallModule(G4LogicalVolume* DetectorVolume, int tag_number){
+	double y_displacement = get_module_y_displacement(tag_number);
+	double x_size = (n_top_layers)*full_layer_height + (n_top_layers - 1)*layer_spacing_top;// top part of module, basically
+	double z_size = module_x_edge_length;
+	double y_size = module_y_edge_length;
+	auto ModuleVolume = Construction::BoxVolume("WallModule" + std::to_string(tag_number), x_size, y_size, z_size);
+
+	for (int i = 0; i < n_top_layers; i++){
+		double x_position = (0.5 + i)*full_layer_height + i*layer_spacing_top;
+		auto BackScintillator = new Scintillator("BS_" + std::to_string(tag_number) + "_" + std::to_string(i), full_layer_height, module_y_edge_length, module_x_edge_length, scintillator_casing_thickness);
+		_scintillators.push_back(BackScintillator);
+		std::cout << x_size << " " << y_size << " " << z_size << " " << std::endl;
+		std::cout <<"x_position: " << x_position << std::endl;
+		BackScintillator->PlaceIn(ModuleVolume, G4Translate3D(x_position -0.5*x_size, 0, 0));
+	}
+
+
+
+	return Construction::PlaceVolume(ModuleVolume, DetectorVolume,
+			Construction::Transform(0.5*x_edge_length + 0.5*x_size, get_module_y_displacement(tag_number), 0.5*(z_size + full_detector_height) - layer_z_world[n_floor_layers] ));
 }
 
 //__Build Detector______________________________________________________________________________
 G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 	Scintillator::Material::Define();
 	_scintillators.clear();
-	// pre_data->Branch("X_S", &X_POS_STEP, "X_S/D");
-	// pre_data->Branch("Y_S", &Y_POS_STEP, "Y_S/D");
-	// pre_data->Branch("X_H", &X_POS_HIT, "X_H/D");
-	// pre_data->Branch("Y_H", &Y_POS_HIT, "Y_H/D");
 
 	auto DetectorVolume = Construction::BoxVolume("Box", x_edge_length + x_edge_increase, y_edge_length, full_detector_height,
 												  Construction::Material::Air, G4VisAttributes::GetInvisible());
 
-	//DetectorVolume->SetVisAttributes(G4VisAttributes::Invisible);
 
 	for (int module_number = 0; module_number < NMODULES; module_number++){
 		Detector::ConstructModule(DetectorVolume, module_number,
 					   0.5L, //These arguments are not actually used
 					   0.5L,
 					   0.0L);
+	}
+
+	for (int module_number = 0; module_number < int(sqrt(NMODULES)); module_number++){
+		std::cout << "Wall Module " << module_number << std::endl;
+		Detector::ConstructWallModule(DetectorVolume, module_number);
 	}
 
     auto first_hermetic_floor = new Scintillator("HF1",
@@ -642,13 +698,6 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
     _scintillators.push_back(second_hermetic_floor);
     second_hermetic_floor->PlaceIn(DetectorVolume, G4Translate3D(0.0, 0.0, half_detector_height - 1.5*layer_w_case - layer_spacing - steel_height));
 
- //   auto third_hermetic_floor = new Scintillator("HF3",
- //                                               x_edge_length,
- //                                                y_edge_length,
- //                                                full_layer_height,
- //                                                scintillator_casing_thickness);
- //   _scintillators.push_back(third_hermetic_floor);
- //   third_hermetic_floor->PlaceIn(DetectorVolume, G4Translate3D(0.0, 0.0, half_detector_height - 2.5*layer_w_case - 2*layer_spacing - steel_height));
 
     auto hermetic_wall = new Scintillator("HW1",
                                             full_layer_height,
@@ -673,7 +722,6 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 			 Construction::CasingAttributes());
 	Construction::PlaceVolume(_steel, DetectorVolume, Construction::Transform(0.0, 0.0, half_detector_height - 0.5*steel_height));
 
-	//	Construction::Export(DetectorVolume, folder, file, arg4 );
 
 	return Construction::PlaceVolume(DetectorVolume, world,
 		   Construction::Transform(0.5L*x_edge_length + x_displacement, 0.5L*y_edge_length + y_displacement, -0.50*full_detector_height));
@@ -867,27 +915,6 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 	Construction::PlaceVolume(modified, earth, Earth::SandstoneTransform());
 
 	//PLACE WHOLE THING IN WORLD
-
-	//auto mod = CMS::_calculate_modification("modified_marl", Earth::MarlVolume(),
-	//                      marl_top + Earth::MarlDepth(), marl_top);
-
-
-	////export geometry to gdml files
-	//	Construction::Export(CMSVolume(), folder, file5, arg4 );
-	//	Construction::Export(earth, folder, file4, arg4 );
-
-
-	//// Put Range Cuts on earth volume
-    // G4Region* cut_region = new G4Region("Earth_Cut_Region");
-    // cut_region->AddRootLogicalVolume(earth);
-    // G4ProductionCuts* cuts = new G4ProductionCuts;
-    // cuts->SetProductionCut(1.0*m,G4ProductionCuts::GetIndex("gamma"));
-    // cuts->SetProductionCut(1.0*m,G4ProductionCuts::GetIndex("e-"));
-    // cuts->SetProductionCut(1.0*m,G4ProductionCuts::GetIndex("e+"));
-    // cuts->SetProductionCut(1.0*m,G4ProductionCuts::GetIndex("proton"));
-    // cut_region->SetProductionCuts(cuts);
-
-
 
 	return Construction::PlaceVolume(earth, world, Earth::Transform());
 
