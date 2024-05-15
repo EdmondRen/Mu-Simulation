@@ -16,6 +16,7 @@
 
 #include "analysis.hh"
 #include "ui.hh"
+#include "TTree.h"
 
 namespace MATHUSLA { namespace MU {
 
@@ -64,6 +65,8 @@ public:
   static void SetSaveOption(const bool save_option, const bool cut_save_option);
   
   static void SaveInfo(std::string&  prefix);
+
+  static TTree* addGeometry();
 
   static const std::string& GetDetectorName();
   static bool IsDetectorDataPerEvent();

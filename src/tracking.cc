@@ -22,13 +22,27 @@ G4ThreadLocal G4Allocator<Hit>* HitAllocator = nullptr;
 Hit::Hit(const G4ParticleDefinition* particle,
          const int track,
          const int parent,
-         const std::string& chamber,
+         const double center1,
+		 const double center2,
+		 const int bar_direction,
+		 const int normal,
+		 const std::string& chamberID,
          const double deposit,
          const G4LorentzVector position,
-         const G4LorentzVector momentum)
-    : G4VHit(), _particle(particle), _trackID(track), _parentID(parent),
-      _chamberID(chamber), _deposit(deposit), _position(position),
-      _momentum(momentum) {}
+         const G4LorentzVector momentum) {
+	_particle = particle;
+	_trackID = track;
+	_parentID = parent;
+	_center1 = center1;
+	_center2 = center2;
+	_bar_direction = bar_direction;
+	_normal = normal;
+	_chamberID = chamberID;
+	_deposit = deposit;
+	_position = position;
+	_momentum = momentum;
+		
+}
 //----------------------------------------------------------------------------------------------
 
 //__Hit Constructor_____________________________________________________________________________
@@ -166,13 +180,11 @@ namespace { ////////////////////////////////////////////////////////////////////
 template<class NameMap>
 const Analysis::ROOT::DataEntryList _convert_to_analysis(const HitCollection* collection,
                                                          NameMap name_map) {
-  constexpr const std::size_t column_count = 14UL;
+  constexpr const std::size_t column_count = 18UL;
 
   Analysis::ROOT::DataEntryList out;
   out.reserve(column_count);
-
-  const auto size = collection->GetSize();
-  for (std::size_t i = 0; i < column_count; ++i) {
+const auto size = collection->GetSize(); for (std::size_t i = 0; i < column_count; ++i) {
     Analysis::ROOT::DataEntry entry;
     entry.reserve(size);
     out.push_back(entry);
@@ -182,18 +194,22 @@ const Analysis::ROOT::DataEntryList _convert_to_analysis(const HitCollection* co
     const auto hit = dynamic_cast<Hit*>(collection->GetHit(i));
     out[0].push_back(hit->GetDeposit());
     out[1].push_back(hit->GetPosition().t());
-    out[2].push_back(name_map(hit->GetChamberID()));
-    out[3].push_back(hit->GetPDGEncoding());
-    out[4].push_back(hit->GetTrackID());
-    out[5].push_back(hit->GetParentID());
-    out[6].push_back(hit->GetPosition().x());
-    out[7].push_back(hit->GetPosition().y());
-    out[8].push_back(hit->GetPosition().z());
-    out[9].push_back(hit->GetMomentum().e());
-    out[10].push_back(hit->GetMomentum().px());
-    out[11].push_back(hit->GetMomentum().py());
-    out[12].push_back(hit->GetMomentum().pz());
-    out[13].push_back(1);
+	out[2].push_back(hit->GetCenter1());
+	out[3].push_back(hit->GetCenter2());
+	out[4].push_back(hit->GetBarDirection());
+	out[5].push_back(hit->GetLayerDirection());
+    out[6].push_back(name_map(hit->GetChamberID()));
+    out[7].push_back(hit->GetPDGEncoding());
+    out[8].push_back(hit->GetTrackID());
+    out[9].push_back(hit->GetParentID());
+    out[10].push_back(hit->GetPosition().x());
+    out[11].push_back(hit->GetPosition().y());
+    out[12].push_back(hit->GetPosition().z());
+    out[13].push_back(hit->GetMomentum().e());
+    out[14].push_back(hit->GetMomentum().px());
+    out[15].push_back(hit->GetMomentum().py());
+    out[16].push_back(hit->GetMomentum().pz());
+    out[17].push_back(1);
   }
 
   return out;
@@ -236,20 +252,24 @@ const Analysis::ROOT::DataEntryList _convert_to_cut_analysis(const HitCollection
   if (tracker_layers.size() >= 3) {
       for (std::size_t i = 0; i < size; ++i) {
         const auto hit = dynamic_cast<Hit*>(collection->GetHit(i));
-        out[0].push_back(hit->GetDeposit());
-        out[1].push_back(hit->GetPosition().t());
-        out[2].push_back(name_map(hit->GetChamberID()));
-        out[3].push_back(hit->GetPDGEncoding());
-        out[4].push_back(hit->GetTrackID());
-        out[5].push_back(hit->GetParentID());
-        out[6].push_back(hit->GetPosition().x());
-        out[7].push_back(hit->GetPosition().y());
-        out[8].push_back(hit->GetPosition().z());
-        out[9].push_back(hit->GetMomentum().e());
-        out[10].push_back(hit->GetMomentum().px());
-        out[11].push_back(hit->GetMomentum().py());
-        out[12].push_back(hit->GetMomentum().pz());
-        out[13].push_back(1);
+    	out[0].push_back(hit->GetDeposit());
+    	out[1].push_back(hit->GetPosition().t());
+		out[2].push_back(hit->GetCenter1());
+		out[3].push_back(hit->GetCenter2());
+		out[4].push_back(hit->GetBarDirection());
+		out[5].push_back(hit->GetLayerDirection());
+    	out[6].push_back(name_map(hit->GetChamberID()));
+    	out[7].push_back(hit->GetPDGEncoding());
+    	out[8].push_back(hit->GetTrackID());
+    	out[9].push_back(hit->GetParentID());
+    	out[10].push_back(hit->GetPosition().x());
+    	out[11].push_back(hit->GetPosition().y());
+    	out[12].push_back(hit->GetPosition().z());
+    	out[13].push_back(hit->GetMomentum().e());
+    	out[14].push_back(hit->GetMomentum().px());
+    	out[15].push_back(hit->GetMomentum().py());
+    	out[16].push_back(hit->GetMomentum().pz());
+    	out[17].push_back(1);
       }
   }
 

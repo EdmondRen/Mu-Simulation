@@ -293,6 +293,15 @@ void Builder::SaveInfo(std::string & prefix){
 }
 //----------------------------------------------------------------------------------------------
 
+//__Add Geometry to Root File___________________________________________________________________
+TTree* Builder::addGeometry() {
+	TTree* someTree;
+	if (_detector == "Flat") {return someTree;}
+	else {
+		return Box::Detector::addGeometry();
+	}
+}
+
 //__Get Current Detector Name___________________________________________________________________
 const std::string& Builder::GetDetectorName() {
   return _detector;
