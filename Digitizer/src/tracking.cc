@@ -22,10 +22,16 @@ int main(int argc, char *argv[]){
 	bool cosmic = false;
 	while (i < argc) {
 		if (strcmp("-l", argv[i]) == 0) {
-			LHCfiles = io::ProcessDirectory(argv[i+1], "");
+			if (io::is_directory(argv[i+1]))
+				LHCfiles = io::ProcessDirectory(argv[i+1], "");
+			else 
+				LHCfiles.push_back(argv[i+1]);
 			input = true;
 		} else if (strcmp("-c", argv[i]) == 0) {
-			CosmicFiles = io::ProcessDirectory(argv[i+1], "");
+			if (io::is_directory(argv[i+1]))
+				CosmicFiles = io::ProcessDirectory(argv[i+1], "");
+			else 
+				CosmicFiles.push_back(argv[i+1]);
 			cosmic = true;
 		} else if (strcmp("-o", argv[i]) == 0) {
 			outdir = TString(argv[i+1]);
