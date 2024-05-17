@@ -3,14 +3,11 @@
 #include "TreeHandler.hh"
 #include "Digitizer.hh"
 #include "globals.hh"
-//#include "VertexFinder.hh"
-
 
 #ifndef RUN_MANAGER_DEFINE
 #define RUN_MANAGER_DEFINE
 
 class RunManager{
-
 
 public:
 
@@ -18,6 +15,11 @@ public:
 	int StartTracking();
 	void SetInputFile(TString name){_InputFile_Name = name; fileNumber++;}
 	void SetOutputFile(TString name){_OutputFile_Name = name;}
+	void SetCosmicFile(TString name){
+		_CosmicFile_Name = name;
+		cosmic = true;
+	}
+
 	TString OutFileName(){
 		std::ostringstream strs;
 		strs << fileNumber;
@@ -26,14 +28,9 @@ public:
 
 	unsigned long long TotalEventsProcessed = 0;
 
-	RunManager(){
-		_digitizer = new Digitizer();
-	}
+	RunManager(){_digitizer = new Digitizer();}
 
-	~RunManager(){
-		delete _digitizer;
-	}
-
+	~RunManager(){delete _digitizer;}
 
 private:
 
@@ -47,12 +44,12 @@ private:
 	//DATA IO NAMES AND FILES
 	TString _InputFile_Name;
 	TString _OutputFile_Name;
+	TString _CosmicFile_Name;
+	bool cosmic = false;
 
 	TString _InputTree_Name = TString("box_run");
 	TString _OutputTree_Name = TString("integral_tree");
 	TString _geomTree_Name = TString("Geometry");
-
-
 
 };
 

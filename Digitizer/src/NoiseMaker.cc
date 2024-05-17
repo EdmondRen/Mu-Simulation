@@ -235,6 +235,7 @@ void NoiseMaker::layer_detIDs(std::vector<detID>& _detID_list, std::vector<doubl
 				detID _id;
 		        if (yModule%2==0) _id = detID(yCenter, shortCenter, bar_direction, 0, idNumber);
 				else _id = detID(shortCenter, yCenter, bar_direction, 0, idNumber);
+				_id.SetGeometry(Geometry);
 				_detID_list.push_back(_id);
 				_longCenters.push_back(longCenter);
 			}
@@ -282,6 +283,7 @@ void NoiseMaker::back_detIDs(std::vector<detID>& _detID_list, std::vector<double
 				int idNumber = xIndex + xModule*num_x + (num_xMods*num_x)*yIndex;
 				idNumber = idNumber*100 + layerid;
 		        detID _id = detID(shortCenter, zCenter, bar_direction, 1, idNumber);
+				_id.SetGeometry(Geometry);
 				_detID_list.push_back(_id);
 				_longCenters.push_back(longCenter);
 			}
@@ -322,6 +324,7 @@ void NoiseMaker::wall_detIDs(std::vector<detID>& _detID_list, std::vector<double
 				int idNumber = xIndex + num_x*yIndex;
 				idNumber = idNumber*100 + layerid;
 				detID _id = detID(shortCenter, zCenter, bar_direction, 1, idNumber);
+				_id.SetGeometry(Geometry);
 				_detID_list.push_back(_id);
 				_longCenters.push_back(longCenter);
 			}
@@ -362,6 +365,7 @@ void NoiseMaker::floor_detIDs(std::vector<detID>& _detID_list, std::vector<doubl
 				detID _id;
 				if (yModule%2==0) _id = detID(yCenter, shortCenter, bar_direction, 0, idNumber);
 				else _id = detID(shortCenter, yCenter, bar_direction, 0, idNumber);
+				_id.SetGeometry(Geometry);
 				_detID_list.push_back(_id);
 				_longCenters.push_back(longCenter);
 			}
