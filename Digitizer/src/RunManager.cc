@@ -74,8 +74,8 @@ int RunManager::StartTracking()
 						current->z += detector::COSMIC_SHIFT[2];
 					}
 					_digitizer->AddHit(current);
-					n_cosmic -= 1;
 				}
+				n_cosmic -= 1;
 			}
 
 			// copying the data to the new tree, and loading all the variables, incrementing index
