@@ -11,12 +11,12 @@ The digitizer may be installed with the equivalent script `install_digitizer`. W
 
 ## Running the Digitizer
 
-The digitizer requires two command line arguments, the path to an input file, and the path to which the output file should be written. The input file should be the output from a MATHUSLA Mu-Simulation run, a Geant4 based simulation of particle passage through the MATHUSLA detector. 
+The digitizer requires two command line arguments, the path to an input file, and the path to which the output file should be written. It may also include a third option to run cosmic background, which would be included stochastically along with the regular input. The input file and cosmic file should be the output from a MATHUSLA Mu-Simulation run, a Geant4 based simulation of particle passage through the MATHUSLA detector. 
 
 An example command to run the digitizer:
 
 ```bash
-$ ./tracker path_to_input_file path_to_write_output 
+$ ./tracker -l path_to_input -o path_to_write -c path_to_cosmic_input
 ```
 A script for automating series runs of the tracker, and further documentation about it, is located in the /run/ directory. 
 
@@ -37,6 +37,7 @@ The parameters are explained in the table below:
 |start_ev                | 0.0                  | |
 |end_ev              | 200000.0                 | |
 |noise_hz                | 0.0                  | |
+|cosmic_rate         | Number of cosmic events per LHC event |0.28767
 
 
 
