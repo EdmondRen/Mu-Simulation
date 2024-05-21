@@ -21,7 +21,7 @@ namespace physics{
 	public:
 
         template <typename tree_manager>
-        sim_hit(tree_manager* tm, int n){
+        sim_hit(tree_manager* tm, GeometryHandler* gh, int n){
             index = n;
             x = (*(tm->sim_hit_x))[n];
             y = (*(tm->sim_hit_y))[n];
@@ -38,6 +38,7 @@ namespace physics{
 	    	det_id = detID((*(tm->sim_hit_center1))[n], (*(tm->sim_hit_center2))[n],
 	    	(*(tm->sim_hit_bar_direction))[n], (*(tm->sim_hit_layer_direction))[n],
 	    	(*(tm->sim_hit_layerID))[n]);
+			det_id.SetGeometry(gh);
         }
 
 		sim_hit(int index, double x, double y, double z, double t, double e){

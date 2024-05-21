@@ -1,4 +1,5 @@
 #include "globals.hh"
+#include "TreeHandler.hh"
 #include <cmath>
 #include <iostream>
 
@@ -17,6 +18,7 @@ public:
 	//front_walls, floor, layers, back wall
 	int layerID;
 	bool _null;
+	GeometryHandler* geometry;
 
 	void Print(){
 
@@ -57,7 +59,8 @@ public:
 		_null = false;
 	}
 
-	bool IsNull() {return _null;}
+	void SetGeometry(GeometryHandler *_geometry){geometry=_geometry;}
+
 
 	bool operator==(const detID &detID2){
 		return (detectorID == detID2.detectorID);
@@ -67,36 +70,26 @@ public:
 	    if (normal == 2 || normal == 0) {//vertical layers
 	        if (bar_direction == 0) { // x long
 	            return {detector::time_resolution*(constants::c/constants::optic_fiber_n)/sqrt(2),
-		    detector::scintillator_width/sqrt(12.), detector::scintillator_thickness/sqrt(12.)};
+		    geometry->GetWidth()/sqrt(12.), geometry->GetThickness()/sqrt(12.)};
 			} else {
-		    	return {detector::scintillator_width/sqrt(12.),
+		    	return {geometry->GetWidth()/sqrt(12.),
 		    	detector::time_resolution*(constants::c/constants::optic_fiber_n)/sqrt(2),
-		    	detector::scintillator_thickness/sqrt(12.)};
+		    	geometry->GetThickness()/sqrt(12.)};
 			}
 	    } //horizontal layers
 	    if (bar_direction == 0){
 	        return {detector::time_resolution*(constants::c/constants::optic_fiber_n)/sqrt(2),
-		detector::scintillator_thickness/sqrt(12.), detector::scintillator_width/sqrt(12.)};
+		geometry->GetThickness()/sqrt(12.), geometry->GetWidth()/sqrt(12.)};
 	    } else {
-	        return {detector::scintillator_width/sqrt(12.), detector::scintillator_thickness/sqrt(12.),
+	        return {geometry->GetWidth()/sqrt(12.), geometry->GetThickness()/sqrt(12.),
 		detector::time_resolution*(constants::c/constants::optic_fiber_n)/sqrt(2)};
 	    }
 	}
 
-	std::vector<double> GetCenter(){
-		return {center1, center2};
-	}
-
-	int GetLongIndex() {
-		return bar_direction;
-	}
-
-	int GetNormal() {
-		return normal;
-	}
+	bool IsNull() {return _null;}
+	std::vector<double> GetCenter(){return {center1, center2};}
+	int GetLongIndex() {return bar_direction;}
+	int GetNormal() {return normal;}
 };
-
-
-
 
 #endif
