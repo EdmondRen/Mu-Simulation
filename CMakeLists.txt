@@ -98,5 +98,5 @@ target_link_libraries(simulation PUBLIC mu-simulation-lib)
 add_executable(dump_geometry src/dump_geometry.cc)
 target_link_libraries(dump_geometry PUBLIC mu-simulation-lib)
 
-install(DIRECTORY scripts DESTINATION bin/MATHUSLA)
+install(DIRECTORY scripts DESTINATION bin/MATHUSLA USE_SOURCE_PERMISSIONS)
 install(TARGETS simulation dump_geometry DESTINATION bin/MATHUSLA)
