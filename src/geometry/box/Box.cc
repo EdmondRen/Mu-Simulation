@@ -52,8 +52,6 @@ G4LogicalVolume* _calculate_modification(const std::string& name,
 
 }
 
-
-
 namespace { ////////////////////////////////////////////////////////////////////////////////////
 
 //__Box Sensitive Material______________________________________________________________________
@@ -98,7 +96,6 @@ constexpr auto scintillator_casing_thickness = 0.003*m;
 
 constexpr auto layer_spacing = 0.8*m;
 constexpr auto layer_spacing_top = 0.8*m; // Top layers have different spacing
-constexpr auto layer_count   = 4UL;
 
 constexpr auto module_x_edge_length = 9.0*m;
 constexpr auto module_y_edge_length = 9.0*m;
@@ -110,17 +107,17 @@ constexpr auto wall_gap = 0.01*m;
 constexpr auto wall_gap2 = 1.0*m;
 //increase detector volume for walls - symmetric, so its size is not that relevant, so long as it's bigger
 //These are only for the logical volume, so they don't matter too much.
-constexpr auto x_front_wall = 4*full_layer_height + 2*wall_gap2 + 4*wall_gap; //double what you need, since it is symmetric on either side
-constexpr auto x_back_wall = 8*full_layer_height * 8*layer_spacing_top;
+constexpr auto x_front_wall = 2*(n_wall_layers)*full_layer_height + 2*wall_gap2 + 2*(n_wall_layers)*wall_gap; //double what you need, since it is symmetric on either side
+constexpr auto x_back_wall = 2*(n_back_layers)*full_layer_height + 2*(n_back_layers)*layer_spacing_top;
 constexpr auto x_edge_increase = x_front_wall + x_back_wall;
 
 constexpr auto layer_w_case = full_layer_height;
 
-constexpr auto full_module_height =  air_gap_decay + 4.0*layer_w_case + 3.0*layer_spacing_top;
+constexpr auto full_module_height =  air_gap_decay + n_top_layers*layer_w_case + (n_top_layers - 1)*layer_spacing_top;
 
-constexpr auto wall_height = (2*full_layer_height + layer_spacing + air_gap_decay);
+constexpr auto wall_height = (n_floor_layers*full_layer_height + layer_spacing + air_gap_decay);
 
-constexpr int NBEAMLAYERS = 4;
+constexpr int NBEAMLAYERS = n_top_layers;
 constexpr auto beam_x_edge_length = 0.10*m;
 constexpr auto beam_y_edge_length = 0.10*m;
 constexpr auto beam_thickness = 0.02*m;
@@ -588,7 +585,7 @@ G4VPhysicalVolume* Detector::ConstructModule(G4LogicalVolume* DetectorVolume, in
 	auto ModuleVolume = Construction::BoxVolume("Module" + std::to_string(tag_number), module_x_edge_length + module_case_thickness, module_y_edge_length + module_case_thickness, full_module_height);
 
 
-	for (std::size_t layer{}; layer < layer_count; ++layer) {
+	for (std::size_t layer{}; layer < n_top_layers; ++layer) {
 		auto current = Detector::ConstructScintillatorLayer(ModuleVolume, tag_number, layer,
 															0*m,
 															0*m,
