@@ -74,7 +74,7 @@ constexpr int n_wall_layers{2};
 constexpr int n_back_layers = sqrt(NMODULES);
 constexpr auto x_edge_length = 39.0*m;
 constexpr auto y_edge_length = 39.0*m;
-constexpr auto x_displacement = 100.0*m;
+constexpr auto x_displacement = 70.0*m;
 constexpr auto y_displacement = -19.5*m;
 constexpr auto z_displacement = 8547.0*cm;
 
