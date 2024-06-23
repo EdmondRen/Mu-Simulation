@@ -64,6 +64,7 @@ namespace physics{
         double particle_energy;
         double particle_parent_trackid;
 		detID det_id;
+		int type; 		//Type of signal (0=LHC, 1=Cosmic)
 
 	}; //sim
 

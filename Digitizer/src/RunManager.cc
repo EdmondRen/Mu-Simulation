@@ -12,20 +12,25 @@
 
 int RunManager::StartTracking()
 {
-	TreeHandler *CH;
-	if (cosmic)
-		CH = new TreeHandler(_InputTree_Name, _CosmicFile_Name, _OutputTree_Name, OutFileName());
 
-	TreeHandler _handler(_InputTree_Name, _InputFile_Name, _OutputTree_Name, OutFileName());
-	if (_handler.IsNull()) {
+	TH = new TreeHandler(_InputTree_Name, _InputFile_Name, _OutputTree_Name, OutFileName());
+	if (TH->IsNull()) {
 		std::cout << "Sorry, I couldn't open that file" << std::endl;
 		return 0;
 	} 
 	
+	TreeHandler *CH;
+	if (cosmic) {
+		CH = new TreeHandler(_InputTree_Name, _CosmicFile_Name, TH);
+		if (CH->IsNull()) {
+			std::cout << "Sorry, I couldn't open that cosmic file" << std::endl;
+			return 0;
+		}
+	} 
+
 	GeometryHandler _geometry(_geomTree_Name, _InputFile_Name);
 	_geometry.LoadGeometry();
 
-	TH = &_handler;
 	int events_handled = 0;
 
 	int dropped_hits = 0;
@@ -70,13 +75,18 @@ int RunManager::StartTracking()
 			}
 			//adding cosmic events as chosen by poisson distribution
 			while (n_cosmic > 0) {
+				std::cout << "Going to set the index" << std::endl;
 				CH->index =(int)_digitizer->generator.Uniform(CH->NumEntries);
 				if (CH->Next() < 0) {
 					CH->index = 0;// for now, just loop back to start	
 				}
+				std::cout << "Going to load event | ";
 				CH->LoadEvent();
+				std::cout << "Loaded Event Properly | ";
 				for (int n_hit = 0; n_hit < CH->sim_numhits; n_hit++){
 					physics::sim_hit *current = new physics::sim_hit(CH, &_geometry, n_hit);
+					CH->sim_hit_type_buf->push_back(1);
+					std::cout << "Pushed back value for cosmic" <<std::endl;
 					if (hndlr.par_map["branch"] == 1.0) {
 						current->x += detector::COSMIC_SHIFT[0];
 						current->y += detector::COSMIC_SHIFT[1];
@@ -86,12 +96,12 @@ int RunManager::StartTracking()
 				}
 				n_cosmic -= 1;
 			}
-
 			// copying the data to the new tree, and loading all the variables, incrementing index
 			TH->LoadEvent();
 			//adding all hits of the tree into the digitizer
 			for (int n_hit = 0; n_hit < TH->sim_numhits; n_hit++){
 				physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_hit);
+				TH->sim_hit_type_buf->push_back(0);
 				if (hndlr.par_map["branch"] == 1.0) {
 					current->x += detector::COSMIC_SHIFT[0];
 					current->y += detector::COSMIC_SHIFT[1];
@@ -110,13 +120,10 @@ int RunManager::StartTracking()
                         digi_list.push_back(digi);
                 }
         	}
-			std::cout << "events handled: " << digi_list.size() << " | ";
+			//std::cout << "events handled: " << digi_list.size() << " | ";
 			TH->ExportDigis(digi_list, _digitizer->seed);
+			std::cout << TH->sim_hit_type_buf->size() << std::endl;
 
-			if (cosmic) {
-				CH->ExportDigis(digi_list, _digitizer->seed);
-			}
-			
 			TH->Fill();
 
 			dropped_hits += _digitizer->dropped_hits;

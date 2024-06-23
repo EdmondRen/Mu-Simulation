@@ -32,6 +32,7 @@ void NoiseMaker::preDigitizer(GeometryHandler* _geometry){
 	ParHandler hndlr;
 	hndlr.Handle();
 	double noise_hz = hndlr.par_map["noise_hz"];
+	window = hndlr.par_map["noise_window"];
 	if(noise_hz>0){
 		run = true;
 		hits_per_second = noise_hz;

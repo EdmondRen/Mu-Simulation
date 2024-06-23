@@ -53,6 +53,7 @@ int main(int argc, char *argv[]){
 			//For now, this assumes 1-1 and if not, re-loop through
 			int cosmic_index = i % CosmicFiles.size();
 			RM.SetCosmicFile(CosmicFiles[cosmic_index]);
+			std::cout << "running cosmic" << std::endl;
 		}
 		RM.SetInputFile(f);
 		RM.StartTracking();

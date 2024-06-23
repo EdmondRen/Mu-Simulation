@@ -28,6 +28,7 @@ public:
 	int LoadEvent(){
 		if (InputTree == nullptr) return -1;
 		InputTree->GetEvent(index);
+		AddEvent();
 		return 0;
 	}
 
@@ -36,6 +37,7 @@ public:
 		gROOT->cd();
 		InputTree->GetEvent(index);
 		OutputTree->Fill();
+		Flush();
 	}
 
 	void Write(){
@@ -45,8 +47,120 @@ public:
 		OutputFile->Close();
 	}
 
+
 	template<class digi_hit>
 	void ExportDigis(std::vector<digi_hit*>, long long int digi_seed);
+
+	TreeHandler(TString input_tree_name, TString input_file_name, TreeHandler* TH) {
+		InputFile = TFile::Open(input_file_name);
+		if (! InputFile) {
+      		_Null = true;
+      		return;
+    	}
+
+		InputTree = (TTree*) InputFile->Get(input_tree_name);
+
+    	if (! InputTree){
+      		_Null = true;
+      		return;
+    	}
+
+		InputTree->SetBranchAddress("NumHits", &sim_numhits);
+ 		InputTree->SetBranchAddress("Hit_energy", &sim_hit_e);
+ 		InputTree->SetBranchAddress("Hit_time", &sim_hit_t);
+ 		InputTree->SetBranchAddress("Hit_Center1", &sim_hit_center1);
+ 		InputTree->SetBranchAddress("Hit_Center2", &sim_hit_center2);
+ 		InputTree->SetBranchAddress("Hit_bar_direction", &sim_hit_bar_direction);
+ 		InputTree->SetBranchAddress("Hit_layer_direction", &sim_hit_layer_direction);
+ 		InputTree->SetBranchAddress("Hit_LayerID", &sim_hit_layerID);
+
+ 		InputTree->SetBranchAddress("Hit_particlePdgId", &sim_hit_particlePdgId);
+ 		InputTree->SetBranchAddress("Hit_G4TrackId", &sim_hit_G4TrackId);
+ 		InputTree->SetBranchAddress("Hit_G4ParentTrackId", &sim_hit_G4ParentTrackId);
+ 		InputTree->SetBranchAddress("Hit_x", &sim_hit_x);
+ 		InputTree->SetBranchAddress("Hit_y", &sim_hit_y);
+ 		InputTree->SetBranchAddress("Hit_z", &sim_hit_z);
+ 		InputTree->SetBranchAddress("Hit_particleEnergy", &sim_hit_particleEnergy);
+ 		InputTree->SetBranchAddress("Hit_particlePx", &sim_hit_px);
+ 		InputTree->SetBranchAddress("Hit_particlePy", &sim_hit_py);
+		InputTree->SetBranchAddress("Hit_particlePz", &sim_hit_pz);
+		InputTree->SetBranchAddress("GenParticle_energy", &sim_GenParticle_energy);
+		InputTree->SetBranchAddress("GenParticle_pdgid", &sim_GenParticle_pdgid);
+		InputTree->SetBranchAddress("GenParticle_index", &sim_GenParticle_index);
+		InputTree->SetBranchAddress("GenParticle_G4index", &sim_GenParticle_G4index);
+	 	InputTree->SetBranchAddress("GenParticle_time", &sim_GenParticle_time);
+	 	InputTree->SetBranchAddress("GenParticle_x", &sim_GenParticle_x);
+	 	InputTree->SetBranchAddress("GenParticle_y", &sim_GenParticle_y);
+	 	InputTree->SetBranchAddress("GenParticle_z", &sim_GenParticle_z);
+	 	InputTree->SetBranchAddress("GenParticle_px", &sim_GenParticle_px);
+	 	InputTree->SetBranchAddress("GenParticle_py", &sim_GenParticle_py);
+	 	InputTree->SetBranchAddress("GenParticle_pz", &sim_GenParticle_pz);
+	 	InputTree->SetBranchAddress("GenParticle_mass", &sim_GenParticle_mass);
+
+
+		InputTree->SetBranchStatus("Hit_weight", 0);
+   		InputTree->SetBranchStatus("NumGenParticles", 0);
+   		InputTree->SetBranchStatus("GenParticle_status", 0);
+   		InputTree->SetBranchStatus("GenParticle_pt", 0);
+   		InputTree->SetBranchStatus("GenParticle_eta", 0);
+   		InputTree->SetBranchStatus("GenParticle_phi", 0);
+
+   		InputTree->SetBranchStatus("GenParticle_mo1", 0);
+   		InputTree->SetBranchStatus("GenParticle_mo2", 0);
+   		InputTree->SetBranchStatus("GenParticle_dau1", 0);
+   		InputTree->SetBranchStatus("GenParticle_dau2", 0);
+		InputTree->SetBranchStatus("COSMIC_EVENT_ID", 0);
+ 		InputTree->SetBranchStatus("COSMIC_CORE_X", 0);
+ 		InputTree->SetBranchStatus("COSMIC_CORE_Y", 0);
+ 		InputTree->SetBranchStatus("COSMIC_GEN_PRIMARY_ENERGY", 0);
+ 		InputTree->SetBranchStatus("COSMIC_GEN_THETA", 0);
+ 		InputTree->SetBranchStatus("COSMIC_GEN_PHI", 0);
+ 		InputTree->SetBranchStatus("COSMIC_GEN_FIRST_HEIGHT", 0);
+ 		InputTree->SetBranchStatus("COSMIC_GEN_ELECTRON_COUNT", 0);
+ 		InputTree->SetBranchStatus("COSMIC_GEN_MUON_COUNT", 0);
+ 		InputTree->SetBranchStatus("COSMIC_GEN_HADRON_COUNT", 0);
+ 		InputTree->SetBranchStatus("COSMIC_GEN_PRIMARY_ID", 0);
+ 		InputTree->SetBranchStatus("EXTRA_12", 0);
+ 		InputTree->SetBranchStatus("EXTRA_13", 0);
+ 		InputTree->SetBranchStatus("EXTRA_14", 0);
+ 		InputTree->SetBranchStatus("EXTRA_15", 0);
+
+ 		NumEntries = InputTree->GetEntries();
+
+ 		Double_t sim_numhits_buf = 0;
+ 		sim_hit_e_buf 					= TH->sim_hit_e_buf;					
+ 		sim_hit_t_buf 					= TH->sim_hit_t_buf;
+ 		sim_hit_center1_buf 			= TH->sim_hit_center1_buf; 
+ 		sim_hit_center2_buf 			= TH->sim_hit_center2_buf; 
+ 		sim_hit_bar_direction_buf 		= TH->sim_hit_bar_direction_buf; 
+ 		sim_hit_layer_direction_buf 	= TH->sim_hit_layer_direction_buf;
+ 		sim_hit_layerID_buf 			= TH->sim_hit_layerID_buf;
+ 		sim_hit_particlePdgId_buf 		= TH->sim_hit_particlePdgId_buf;
+ 		sim_hit_G4TrackId_buf 			= TH->sim_hit_G4TrackId_buf;
+ 		sim_hit_G4ParentTrackId_buf 	= TH->sim_hit_G4ParentTrackId_buf;
+ 		sim_hit_x_buf 					= TH->sim_hit_x_buf;
+ 		sim_hit_y_buf 					= TH->sim_hit_y_buf;
+ 		sim_hit_z_buf 					= TH->sim_hit_z_buf;
+ 		sim_hit_particleEnergy_buf 		= TH->sim_hit_particleEnergy_buf;
+ 		sim_hit_px_buf 					= TH->sim_hit_px_buf;
+ 		sim_hit_py_buf 					= TH->sim_hit_py_buf;
+ 		sim_hit_pz_buf 					= TH->sim_hit_pz_buf;
+
+		sim_hit_type_buf				= TH->sim_hit_type_buf;
+
+ 		sim_GenParticle_index_buf 		= TH->sim_GenParticle_index_buf;
+ 		sim_GenParticle_G4index_buf 	= TH->sim_GenParticle_G4index_buf;
+ 		sim_GenParticle_pdgid_buf 		= TH->sim_GenParticle_pdgid_buf;
+ 		sim_GenParticle_time_buf 		= TH->sim_GenParticle_time_buf;
+ 		sim_GenParticle_x_buf 			= TH->sim_GenParticle_x_buf;
+ 		sim_GenParticle_y_buf 			= TH->sim_GenParticle_y_buf;
+ 		sim_GenParticle_z_buf 			= TH->sim_GenParticle_z_buf;
+ 		sim_GenParticle_energy_buf 		= TH->sim_GenParticle_energy_buf;
+ 		sim_GenParticle_px_buf 			= TH->sim_GenParticle_px_buf;
+ 		sim_GenParticle_py_buf 			= TH->sim_GenParticle_py_buf;
+ 		sim_GenParticle_pz_buf 			= TH->sim_GenParticle_pz_buf;
+ 		sim_GenParticle_mass_buf 		= TH->sim_GenParticle_mass_buf;
+	}
 
 	TreeHandler(TString input_tree_name, TString input_file_name, TString output_tree_name, TString outfile_name) {
 		InputFile = TFile::Open(input_file_name);
@@ -81,7 +195,6 @@ public:
  		InputTree->SetBranchAddress("Hit_particlePx", &sim_hit_px);
  		InputTree->SetBranchAddress("Hit_particlePy", &sim_hit_py);
 		InputTree->SetBranchAddress("Hit_particlePz", &sim_hit_pz);
-		InputTree->SetBranchAddress("Hit_weight", &sim_hit_weight);
 		InputTree->SetBranchAddress("GenParticle_energy", &sim_GenParticle_energy);
 		InputTree->SetBranchAddress("GenParticle_pdgid", &sim_GenParticle_pdgid);
 		InputTree->SetBranchAddress("GenParticle_index", &sim_GenParticle_index);
@@ -96,6 +209,7 @@ public:
 	 	InputTree->SetBranchAddress("GenParticle_mass", &sim_GenParticle_mass);
 
 
+		InputTree->SetBranchStatus("Hit_weight", 0);
    		InputTree->SetBranchStatus("NumGenParticles", 0);
    		InputTree->SetBranchStatus("GenParticle_status", 0);
    		InputTree->SetBranchStatus("GenParticle_pt", 0);
@@ -117,34 +231,36 @@ public:
  		InputTree->SetBranchStatus("COSMIC_GEN_MUON_COUNT", 0);
  		InputTree->SetBranchStatus("COSMIC_GEN_HADRON_COUNT", 0);
  		InputTree->SetBranchStatus("COSMIC_GEN_PRIMARY_ID", 0);
- 		InputTree->SetBranchAddress("EXTRA_12", &sim_EXTRA_12);
- 		InputTree->SetBranchAddress("EXTRA_13", &sim_EXTRA_13);
- 		InputTree->SetBranchAddress("EXTRA_14", &sim_EXTRA_14);
- 		InputTree->SetBranchAddress("EXTRA_15", &sim_EXTRA_15);
+ 		InputTree->SetBranchStatus("EXTRA_12", 0);
+ 		InputTree->SetBranchStatus("EXTRA_13", 0);
+ 		InputTree->SetBranchStatus("EXTRA_14", 0);
+ 		InputTree->SetBranchStatus("EXTRA_15", 0);
 
  		NumEntries = InputTree->GetEntries();
 
  		OutputFile = new TFile(outfile_name, "RECREATE");
 		OutputTree = new TTree(output_tree_name, "MATHUSLA Tree");
 
-		OutputTree->Branch("NumHits", &sim_numhits);
-		OutputTree->Branch("Hit_energy", "std::vector<double>", sim_hit_e);
- 		OutputTree->Branch("Hit_time", "std::vector<double>", sim_hit_t);
- 		OutputTree->Branch("Hit_Center1", sim_hit_center1);
- 		OutputTree->Branch("Hit_Center2", sim_hit_center2);
- 		OutputTree->Branch("Hit_bar_direction", sim_hit_bar_direction);
- 		OutputTree->Branch("Hit_layer_direction", sim_hit_layer_direction);
- 		OutputTree->Branch("Hit_LayerID", sim_hit_layerID);
- 		OutputTree->Branch("Hit_particlePdgId", "std::vector<double>", sim_hit_particlePdgId);
- 		OutputTree->Branch("Hit_G4TrackId", "std::vector<double>", sim_hit_G4TrackId);
- 		OutputTree->Branch("Hit_G4ParentTrackId", "std::vector<double>", sim_hit_G4ParentTrackId);
- 		OutputTree->Branch("Hit_x", "std::vector<double>", sim_hit_x);
- 		OutputTree->Branch("Hit_y", "std::vector<double>", sim_hit_y);
- 		OutputTree->Branch("Hit_z", "std::vector<double>", sim_hit_z);
- 		OutputTree->Branch("Hit_particleEnergy", "std::vector<double>", sim_hit_particleEnergy);
- 		OutputTree->Branch("Hit_particlePx", "std::vector<double>", sim_hit_px);
- 		OutputTree->Branch("Hit_particlePy", "std::vector<double>", sim_hit_py);
-		OutputTree->Branch("Hit_particlePz", "std::vector<double>", sim_hit_pz);
+		OutputTree->Branch("NumHits", &sim_numhits_buf);
+		OutputTree->Branch("Hit_energy", "std::vector<double>", &sim_hit_e_buf);
+ 		OutputTree->Branch("Hit_time", "std::vector<double>", &sim_hit_t_buf);
+ 		OutputTree->Branch("Hit_Center1", "std::vector<double>", &sim_hit_center1_buf);
+ 		OutputTree->Branch("Hit_Center2", "std::vector<double>", &sim_hit_center2_buf);
+ 		OutputTree->Branch("Hit_bar_direction", "std::vector<double>", &sim_hit_bar_direction_buf);
+ 		OutputTree->Branch("Hit_layer_direction", "std::vector<double>", &sim_hit_layer_direction_buf);
+ 		OutputTree->Branch("Hit_LayerID", "std::vector<double>", &sim_hit_layerID_buf);
+ 		OutputTree->Branch("Hit_particlePdgId", "std::vector<double>", &sim_hit_particlePdgId_buf);
+ 		OutputTree->Branch("Hit_G4TrackId", "std::vector<double>", &sim_hit_G4TrackId_buf);
+ 		OutputTree->Branch("Hit_G4ParentTrackId", "std::vector<double>", &sim_hit_G4ParentTrackId_buf);
+ 		OutputTree->Branch("Hit_x", "std::vector<double>", &sim_hit_x_buf);
+ 		OutputTree->Branch("Hit_y", "std::vector<double>", &sim_hit_y_buf);
+ 		OutputTree->Branch("Hit_z", "std::vector<double>", &sim_hit_z_buf);
+ 		OutputTree->Branch("Hit_particleEnergy", "std::vector<double>", &sim_hit_particleEnergy_buf);
+ 		OutputTree->Branch("Hit_particlePx", "std::vector<double>", &sim_hit_px_buf);
+ 		OutputTree->Branch("Hit_particlePy", "std::vector<double>", &sim_hit_py_buf);
+		OutputTree->Branch("Hit_particlePz", "std::vector<double>", &sim_hit_pz_buf);
+
+		OutputTree->Branch("Hit_type", "std::vector<int>", &sim_hit_type_buf);
  
 		OutputTree->Branch("Digi_numHits", &Digi_numHits);
 		OutputTree->Branch("Digi_time", &digi_hit_t);
@@ -168,22 +284,18 @@ public:
         OutputTree->Branch("Digi_seed", &digi_seed, "Digi_seed/L");
         OutputTree->Branch("Digi_hitIndices", &digi_hit_indices);
 
- 		OutputTree->Branch("GenParticle_index", "std::vector<double>", sim_GenParticle_index);
- 		OutputTree->Branch("GenParticle_G4index", "std::vector<double>", sim_GenParticle_G4index);
- 		OutputTree->Branch("GenParticle_pdgid", "std::vector<double>", sim_GenParticle_pdgid);
- 		OutputTree->Branch("GenParticle_time", "std::vector<double>", sim_GenParticle_time);
- 		OutputTree->Branch("GenParticle_x", "std::vector<double>", sim_GenParticle_x);
- 		OutputTree->Branch("GenParticle_y", "std::vector<double>", sim_GenParticle_y);
- 		OutputTree->Branch("GenParticle_z", "std::vector<double>", sim_GenParticle_z);
- 		OutputTree->Branch("GenParticle_energy", "std::vector<double>", sim_GenParticle_energy);
- 		OutputTree->Branch("GenParticle_px", "std::vector<double>", sim_GenParticle_px);
- 		OutputTree->Branch("GenParticle_py", "std::vector<double>", sim_GenParticle_py);
- 		OutputTree->Branch("GenParticle_pz", "std::vector<double>", sim_GenParticle_pz);
- 		OutputTree->Branch("GenParticle_mass", "std::vector<double>", sim_GenParticle_mass);
- 		OutputTree->Branch("EXTRA_12", "std::vector<double>", sim_EXTRA_12);
- 		OutputTree->Branch("EXTRA_13", "std::vector<double>", sim_EXTRA_13);
- 		OutputTree->Branch("EXTRA_14", "std::vector<double>", sim_EXTRA_14);
- 		OutputTree->Branch("EXTRA_15", "std::vector<double>", sim_EXTRA_15);
+ 		OutputTree->Branch("GenParticle_index", "std::vector<double>", &sim_GenParticle_index_buf);
+ 		OutputTree->Branch("GenParticle_G4index", "std::vector<double>", &sim_GenParticle_G4index_buf);
+ 		OutputTree->Branch("GenParticle_pdgid", "std::vector<double>", &sim_GenParticle_pdgid_buf);
+ 		OutputTree->Branch("GenParticle_time", "std::vector<double>", &sim_GenParticle_time_buf);
+ 		OutputTree->Branch("GenParticle_x", "std::vector<double>", &sim_GenParticle_x_buf);
+ 		OutputTree->Branch("GenParticle_y", "std::vector<double>", &sim_GenParticle_y_buf);
+ 		OutputTree->Branch("GenParticle_z", "std::vector<double>", &sim_GenParticle_z_buf);
+ 		OutputTree->Branch("GenParticle_energy", "std::vector<double>", &sim_GenParticle_energy_buf);
+ 		OutputTree->Branch("GenParticle_px", "std::vector<double>", &sim_GenParticle_px_buf);
+ 		OutputTree->Branch("GenParticle_py", "std::vector<double>", &sim_GenParticle_py_buf);
+ 		OutputTree->Branch("GenParticle_pz", "std::vector<double>", &sim_GenParticle_pz_buf);
+ 		OutputTree->Branch("GenParticle_mass", "std::vector<double>", &sim_GenParticle_mass_buf);
 	}
 //____________________________________________________________________________________________
 
@@ -206,12 +318,10 @@ public:
  	std::vector<double> *sim_hit_px = nullptr;
  	std::vector<double> *sim_hit_py = nullptr;
  	std::vector<double> *sim_hit_pz = nullptr;
- 	std::vector<double> *sim_hit_weight = nullptr;
- 	Double_t sim_NumGenParticles;
+	std::vector<int>	*sim_hit_type = nullptr;
  	std::vector<double> *sim_GenParticle_index = nullptr;
  	std::vector<double> *sim_GenParticle_G4index = nullptr;
  	std::vector<double> *sim_GenParticle_pdgid = nullptr;
- 	std::vector<double> *sim_GenParticle_status = nullptr;
  	std::vector<double> *sim_GenParticle_time = nullptr;
  	std::vector<double> *sim_GenParticle_x = nullptr;
  	std::vector<double> *sim_GenParticle_y = nullptr;
@@ -220,26 +330,7 @@ public:
  	std::vector<double> *sim_GenParticle_px = nullptr;
  	std::vector<double> *sim_GenParticle_py = nullptr;
  	std::vector<double> *sim_GenParticle_pz = nullptr;
- 	std::vector<double> *sim_GenParticle_mo1 = nullptr;
- 	std::vector<double> *sim_GenParticle_mo2 = nullptr;
- 	std::vector<double> *sim_GenParticle_dau1 = nullptr;
- 	std::vector<double> *sim_GenParticle_dau2 = nullptr;
  	std::vector<double> *sim_GenParticle_mass = nullptr;
- 	std::vector<double> *sim_GenParticle_pt = nullptr;
- 	std::vector<double> *sim_GenParticle_eta = nullptr;
- 	std::vector<double> *sim_GenParticle_phi = nullptr;
-	std::vector<double> *sim_COSMIC_EVENT_ID = nullptr;
- 	std::vector<double> *sim_COSMIC_CORE_X = nullptr;
- 	std::vector<double> *sim_COSMIC_CORE_Y = nullptr;
- 	std::vector<double> *sim_COSMIC_GEN_PRIMARY_ENERGY = nullptr;
- 	std::vector<double> *sim_COSMIC_GEN_THETA = nullptr;
- 	std::vector<double> *sim_COSMIC_GEN_PHI = nullptr;
- 	std::vector<double> *sim_COSMIC_GEN_FIRST_HEIGHT = nullptr;
- 	std::vector<double> *sim_COSMIC_GEN_ELECTRON_COUNT = nullptr;
- 	std::vector<double> *sim_COSMIC_GEN_MUON_COUNT = nullptr;
- 	std::vector<double> *sim_COSMIC_GEN_HADRON_COUNT = nullptr;
- 	std::vector<double> *sim_COSMIC_GEN_PRIMARY_ID = nullptr;
- 	double_t G4KLong_code;
  	std::vector<double> *sim_EXTRA_12 = nullptr;
  	std::vector<double> *sim_EXTRA_13 = nullptr;
  	std::vector<double> *sim_EXTRA_14 = nullptr;
@@ -264,8 +355,114 @@ public:
 	std::vector<int> digi_LayerID;
 	std::vector<int> digi_detID;
   	std::vector<int> digi_hit_indices;
+	std::vector<int> digi_hit_type;
   	std::vector<int> Digi_numHits;
     long long int digi_seed;
+
+//___These are the buffers for each branch so that they can be combined
+//___Make Sim Branches_________________________________________________________________________
+ 	Double_t sim_numhits_buf = 0;
+ 	std::vector<double> *sim_hit_e_buf = nullptr;					
+ 	std::vector<double> *sim_hit_t_buf = nullptr;
+ 	std::vector<double> *sim_hit_center1_buf = nullptr; 
+ 	std::vector<double> *sim_hit_center2_buf = nullptr; 
+ 	std::vector<double> *sim_hit_bar_direction_buf = nullptr; 
+ 	std::vector<double> *sim_hit_layer_direction_buf = nullptr;
+ 	std::vector<double> *sim_hit_layerID_buf = nullptr;
+ 	std::vector<double> *sim_hit_particlePdgId_buf = nullptr;
+ 	std::vector<double> *sim_hit_G4TrackId_buf = nullptr;
+ 	std::vector<double> *sim_hit_G4ParentTrackId_buf = nullptr;
+ 	std::vector<double> *sim_hit_x_buf = nullptr;
+ 	std::vector<double> *sim_hit_y_buf = nullptr;
+ 	std::vector<double> *sim_hit_z_buf = nullptr;
+ 	std::vector<double> *sim_hit_particleEnergy_buf = nullptr;
+ 	std::vector<double> *sim_hit_px_buf = nullptr;
+ 	std::vector<double> *sim_hit_py_buf = nullptr;
+ 	std::vector<double> *sim_hit_pz_buf = nullptr;
+
+	std::vector<int> 	*sim_hit_type_buf = nullptr;
+
+ 	std::vector<double> *sim_GenParticle_index_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_G4index_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_pdgid_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_time_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_x_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_y_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_z_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_energy_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_px_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_py_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_pz_buf = nullptr;
+ 	std::vector<double> *sim_GenParticle_mass_buf = nullptr;
+ 	std::vector<double> *sim_EXTRA_12_buf = nullptr;
+ 	std::vector<double> *sim_EXTRA_13_buf = nullptr;
+ 	std::vector<double> *sim_EXTRA_14_buf = nullptr;
+ 	std::vector<double> *sim_EXTRA_15_buf = nullptr;
+
+	void AddEvent() {
+		sim_numhits_buf += sim_numhits;
+		sim_hit_e_buf->insert(sim_hit_e_buf->end(), sim_hit_e->begin(), sim_hit_e->end());
+		sim_hit_t_buf->insert(sim_hit_t_buf->end(), sim_hit_t->begin(), sim_hit_t->end());
+		sim_hit_center1_buf->insert(sim_hit_center1_buf->end(), sim_hit_center1->begin(), sim_hit_center1->end());
+		sim_hit_center2_buf->insert(sim_hit_center2_buf->end(), sim_hit_center2->begin(), sim_hit_center2->end());
+		sim_hit_bar_direction_buf->insert(sim_hit_bar_direction_buf->end(), sim_hit_bar_direction->begin(), sim_hit_bar_direction->end());
+		sim_hit_layer_direction_buf->insert(sim_hit_layer_direction_buf->end(), sim_hit_layer_direction->begin(), sim_hit_layer_direction->end());
+		sim_hit_layerID_buf->insert(sim_hit_layerID_buf->end(), sim_hit_layerID->begin(), sim_hit_layerID->end());
+		sim_hit_particlePdgId_buf->insert(sim_hit_particlePdgId_buf->end(), sim_hit_particlePdgId->begin(), sim_hit_particlePdgId->end());
+		sim_hit_G4TrackId_buf->insert(sim_hit_G4TrackId_buf->end(), sim_hit_G4TrackId->begin(), sim_hit_G4TrackId->end());
+		sim_hit_G4ParentTrackId_buf->insert(sim_hit_G4ParentTrackId_buf->end(), sim_hit_G4ParentTrackId->begin(), sim_hit_G4ParentTrackId->end());
+		sim_hit_x_buf->insert(sim_hit_x_buf->end(), sim_hit_x->begin(), sim_hit_x->end());
+		sim_hit_y_buf->insert(sim_hit_y_buf->end(), sim_hit_y->begin(), sim_hit_y->end());
+		sim_hit_z_buf->insert(sim_hit_z_buf->end(), sim_hit_z->begin(), sim_hit_z->end());
+		sim_hit_particleEnergy_buf->insert(sim_hit_particleEnergy_buf->end(), sim_hit_particleEnergy->begin(), sim_hit_particleEnergy->end());
+		sim_hit_px_buf->insert(sim_hit_px_buf->end(), sim_hit_px->begin(), sim_hit_px->end());
+		sim_hit_py_buf->insert(sim_hit_py_buf->end(), sim_hit_py->begin(), sim_hit_py->end());
+		sim_hit_pz_buf->insert(sim_hit_pz_buf->end(), sim_hit_pz->begin(), sim_hit_pz->end());
+		sim_GenParticle_index_buf->insert(sim_GenParticle_index_buf->end(), sim_GenParticle_index->begin(), sim_GenParticle_index->end());
+		sim_GenParticle_time_buf->insert(sim_GenParticle_time_buf->end(), sim_GenParticle_time->begin(), sim_GenParticle_time->end());
+		sim_GenParticle_x_buf->insert(sim_GenParticle_x_buf->end(), sim_GenParticle_x->begin(), sim_GenParticle_x->end());
+		sim_GenParticle_y_buf->insert(sim_GenParticle_y_buf->end(), sim_GenParticle_y->begin(), sim_GenParticle_y->end());
+		sim_GenParticle_z_buf->insert(sim_GenParticle_z_buf->end(), sim_GenParticle_z->begin(), sim_GenParticle_z->end());
+		sim_GenParticle_energy_buf->insert(sim_GenParticle_energy_buf->end(), sim_GenParticle_energy->begin(), sim_GenParticle_energy->end());
+		sim_GenParticle_px_buf->insert(sim_GenParticle_px_buf->end(), sim_GenParticle_px->begin(), sim_GenParticle_px->end());
+		sim_GenParticle_py_buf->insert(sim_GenParticle_py_buf->end(), sim_GenParticle_py->begin(), sim_GenParticle_py->end());
+		sim_GenParticle_pz_buf->insert(sim_GenParticle_pz_buf->end(), sim_GenParticle_pz->begin(), sim_GenParticle_pz->end());
+		sim_GenParticle_mass_buf->insert(sim_GenParticle_mass_buf->end(), sim_GenParticle_mass->begin(), sim_GenParticle_mass->end());
+	}
+
+	void Flush(){
+		sim_numhits_buf = 0;
+		sim_hit_e_buf->clear();
+		sim_hit_t_buf->clear();
+		sim_hit_center1_buf->clear();
+		sim_hit_center2_buf->clear();
+		sim_hit_bar_direction_buf->clear();
+		sim_hit_layer_direction_buf->clear();
+		sim_hit_layerID_buf->clear();
+		sim_hit_particlePdgId_buf->clear();
+		sim_hit_G4TrackId_buf->clear();
+		sim_hit_G4ParentTrackId_buf->clear();
+		sim_hit_x_buf->clear();
+		sim_hit_y_buf->clear();
+		sim_hit_z_buf->clear();
+		sim_hit_particleEnergy_buf->clear();
+		sim_hit_px_buf->clear();
+		sim_hit_py_buf->clear();
+		sim_hit_pz_buf->clear();
+		sim_hit_type_buf->clear();
+		sim_GenParticle_index_buf->clear();
+		sim_GenParticle_G4index_buf->clear();
+		sim_GenParticle_pdgid_buf->clear();
+		sim_GenParticle_time_buf->clear();
+		sim_GenParticle_x_buf->clear();
+		sim_GenParticle_y_buf->clear();
+		sim_GenParticle_z_buf->clear();
+		sim_GenParticle_energy_buf->clear();
+		sim_GenParticle_px_buf->clear();
+		sim_GenParticle_py_buf->clear();
+		sim_GenParticle_pz_buf->clear();
+		sim_GenParticle_mass_buf->clear();
+	 }
 
 }; //class TreeHandler
 
@@ -277,47 +474,47 @@ void TreeHandler::ExportDigis(std::vector<digi_hit*> digi_list, long long int se
     digi_hit_y.clear();
     digi_hit_z.clear();
     digi_hit_e.clear();
-      digi_hit_px.clear();
-      digi_hit_py.clear();
-      digi_hit_pz.clear();
-      Digi_numHits.clear();
-      digi_particle_energy.clear();
-      digi_pdg.clear();
-	  digi_track_id.clear();
-	  digi_center1.clear();
-	  digi_center2.clear();
-	  digi_bar_direction.clear();
-	  digi_layer_direction.clear();
-	  digi_LayerID.clear();
-	  digi_detID.clear();
-      
-      digi_seed = seed;
+    digi_hit_px.clear();
+    digi_hit_py.clear();
+    digi_hit_pz.clear();
+    Digi_numHits.clear();
+    digi_particle_energy.clear();
+    digi_pdg.clear();
+	digi_track_id.clear();
+	digi_center1.clear();
+	digi_center2.clear();
+	digi_bar_direction.clear();
+	digi_layer_direction.clear();
+	digi_LayerID.clear();
+	digi_detID.clear();
+    
+    digi_seed = seed;
 
-      for (auto digi : digi_list){
-        Digi_numHits.push_back(digi->hits.size());
-        digi_hit_t.push_back(digi->t);
-        digi_hit_x.push_back(digi->x);
-        digi_hit_y.push_back(digi->y);
-        digi_hit_z.push_back(digi->z);
-        digi_hit_e.push_back(digi->e);
-        digi_hit_px.push_back(digi->px);
-        digi_hit_py.push_back(digi->py);
-        digi_hit_pz.push_back(digi->pz);
-        digi_particle_energy.push_back(digi->particle_energy);
-        digi_pdg.push_back(digi->pdg);
-		digi_track_id.push_back(digi->min_track_id);
-		digi_center1.push_back(digi->det_id.center1);
-		digi_center2.push_back(digi->det_id.center2);
-		digi_bar_direction.push_back(digi->det_id.bar_direction);
-		digi_layer_direction.push_back(digi->det_id.normal);
-		digi_LayerID.push_back(digi->det_id.layerID);
-		digi_detID.push_back(digi->det_id.detectorID);
-        for (auto hit : digi->hits){
-          digi_hit_indices.push_back(hit->index);
-        }
+    for (auto digi : digi_list){
+      Digi_numHits.push_back(digi->hits.size());
+      digi_hit_t.push_back(digi->t);
+      digi_hit_x.push_back(digi->x);
+      digi_hit_y.push_back(digi->y);
+      digi_hit_z.push_back(digi->z);
+      digi_hit_e.push_back(digi->e);
+      digi_hit_px.push_back(digi->px);
+      digi_hit_py.push_back(digi->py);
+      digi_hit_pz.push_back(digi->pz);
+      digi_particle_energy.push_back(digi->particle_energy);
+      digi_pdg.push_back(digi->pdg);
+	  digi_track_id.push_back(digi->min_track_id);
+	  digi_center1.push_back(digi->det_id.center1);
+	  digi_center2.push_back(digi->det_id.center2);
+	  digi_bar_direction.push_back(digi->det_id.bar_direction);
+	  digi_layer_direction.push_back(digi->det_id.normal);
+	  digi_LayerID.push_back(digi->det_id.layerID);
+	  digi_detID.push_back(digi->det_id.detectorID);
+      for (auto hit : digi->hits){
+        digi_hit_indices.push_back(hit->index);
       }
+    }
+}
 
- }
 
 class GeometryHandler { 
 public:
