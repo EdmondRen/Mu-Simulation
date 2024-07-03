@@ -275,6 +275,8 @@ public:
         OutputTree->Branch("Digi_pdg_id", &digi_pdg);
         OutputTree->Branch("Digi_track_id", &digi_track_id);
 
+		OutputTree->Branch("Digi_type", &digi_hit_type);
+
 		OutputTree->Branch("Digi_center1", &digi_center1);
 		OutputTree->Branch("Digi_center2", &digi_center2);
 		OutputTree->Branch("Digi_bar_direction", &digi_bar_direction);
@@ -348,6 +350,9 @@ public:
     std::vector<double> digi_particle_energy;
     std::vector<int> digi_pdg;
     std::vector<int> digi_track_id;
+
+	std::vector<int> digi_hit_type;
+
 	std::vector<double> digi_center1;
 	std::vector<double> digi_center2;
 	std::vector<int> digi_bar_direction;
@@ -355,7 +360,6 @@ public:
 	std::vector<int> digi_LayerID;
 	std::vector<int> digi_detID;
   	std::vector<int> digi_hit_indices;
-	std::vector<int> digi_hit_type;
   	std::vector<int> Digi_numHits;
     long long int digi_seed;
 
@@ -481,6 +485,7 @@ void TreeHandler::ExportDigis(std::vector<digi_hit*> digi_list, long long int se
     digi_particle_energy.clear();
     digi_pdg.clear();
 	digi_track_id.clear();
+	digi_hit_type.clear();
 	digi_center1.clear();
 	digi_center2.clear();
 	digi_bar_direction.clear();
@@ -503,6 +508,9 @@ void TreeHandler::ExportDigis(std::vector<digi_hit*> digi_list, long long int se
       digi_particle_energy.push_back(digi->particle_energy);
       digi_pdg.push_back(digi->pdg);
 	  digi_track_id.push_back(digi->min_track_id);
+
+	  digi_hit_type.push_back(digi->type);
+
 	  digi_center1.push_back(digi->det_id.center1);
 	  digi_center2.push_back(digi->det_id.center2);
 	  digi_bar_direction.push_back(digi->det_id.bar_direction);

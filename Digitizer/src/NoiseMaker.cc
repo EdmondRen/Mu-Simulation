@@ -1,7 +1,7 @@
 
 #include "NoiseMaker.hh"
 
-double NoiseMaker::window = 1000*units::ns;
+double NoiseMaker::window = 600*units::ns;
 
 //------------------------------------------------------------------//
 
@@ -32,7 +32,7 @@ void NoiseMaker::preDigitizer(GeometryHandler* _geometry){
 	ParHandler hndlr;
 	hndlr.Handle();
 	double noise_hz = hndlr.par_map["noise_hz"];
-	window = hndlr.par_map["noise_window"];
+	//window = hndlr.par_map["noise_window"];
 	if(noise_hz>0){
 		run = true;
 		hits_per_second = noise_hz;
@@ -45,6 +45,7 @@ void NoiseMaker::preDigitizer(GeometryHandler* _geometry){
 		back_detIDs(detID_list, longCenters);
 
 		detID_q = detID_list.size();
+		std::cout<<"Number of scintillator bars: " << detID_q << std::endl;
 		double average_hits = window*rate_of_hits*detID_q;
 		std::cout<<"-------------------------------------------------------------------------"<<std::endl;
 		std::cout<<"NoiseMaker is turned on with "<<hits_per_second<<" hz noise rate over a window of "<<window<<" nanoseconds."<<std::endl;

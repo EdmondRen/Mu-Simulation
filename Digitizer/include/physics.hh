@@ -50,8 +50,12 @@ namespace physics{
 			this->e = e;
 		}
 
-        void SetMomentum(Vector momentum){px = momentum.x; py = momentum.y; pz = momentum.z;}
+        void SetMomentum(Vector momentum){ px = momentum.x; py = momentum.y; pz = momentum.z; }
+
         Vector GetParticleMomentum(){ return Vector(px, py, pz); }
+
+		void SetType(int _type) { type = _type; }
+
 		std::size_t index;
 		double x;
 		double y;
@@ -86,6 +90,7 @@ namespace physics{
         double particle_energy;
         int pdg;
         long int min_track_id = 9999999999;
+		int type = -1;
 
         Vector PosVector(){ return Vector(x, y, z); }
 
@@ -101,7 +106,28 @@ namespace physics{
                 py = hit->py;
                 pz = hit->pz;
             }
+			SetType(hit->type);
         }
+
+		void SetType(int _type) {
+			if (type = -1) {
+				type = _type;
+			} else if (type == _type) {
+				return;
+			} else if (type == 0) {
+				type = _type*10;
+			} else if (type == 1) {
+				type = type*10 + _type;
+			} else if (type == 2 && _type == 0) {
+				type = 20;
+			} else if (type == 2 && _type == 1) {
+				type = 12;
+			} else if ((type == 12 && _type == 0 ) || 
+				(type == 10 && _type == 2) || (type=20 && _type == 1)) {
+				type = 120;	
+			}
+
+		}
 
 	}; //digi
 
