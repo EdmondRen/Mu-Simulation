@@ -3,6 +3,7 @@
 
 _simulation of muons through earth material using Geant4_
 
+
 ## Build & Run
 
 The simulation comes with a simple build script called `install` which allows for build customization and execution of the muon simulation.
@@ -42,28 +43,29 @@ Note: The Five Body Muon Decays option will only save tracks with a five-body de
 
 **1. Running the simulation interactively**
 
-The simulation exectuable can be run interactively using the -v option:
+The simulation exectuable can be run interactively using the -v option. For example, the following command will run 1 event with the Box detector.
 
 ```
-./simulation -v
+./simulation -v -e 1
 ```
 
-This is not recommanded unless for debugging purposes, becuase there are many commands settings that needs to be entered later by hand.
+This is not recommanded unless for debugging purposes, becuase there are many setting commands that needs to be entered later by hand.
 
 **2. Running the simulation with script**
 
-The simulation exectuable can take a script that list all the setting and commands to be executed. 
+The simulation exectuable can take a script that list all the setting and commands to be executed.
 
 ```
-./simulation -s YOUR_SCIPT.mac
+./simulation -d DETECTOR_TYPE  -s YOUR_SCIPT.mac
 ```
 
-The script is a text file that contains commands. Available commands are summarized in later section. Here is an example of a script:
+Available commands are summarized in later section. Here is an example of a script:
 
 ```
 # example1.mac
 
 # Select the Detector. Box is the full 100x100m tracker
+# Although selected here, you still need to add '-d Box' option when running the simulation
 /det/select Box
 
 # Select the Generator
@@ -87,14 +89,16 @@ Arguments can also be passed through the simulation to a script. Adding key valu
 ./simulation -s example1.mac momentum 100
 ```
 
-This will pass the key value pairs `(momentum 100)` to the underlying script `example1.mac` and set momentum to 100. 
+This will pass the key value pairs `(momentum 100)` to the underlying script `example1.mac` and set momentum to 100.
 
 A general command to run the simulation is like this:
 
 ```
-./simulation -q  -o OUTPUT_DIR  -s YOUR_SCRIPT.mac key1 100 key2 10 ....
+./simulation -q  -o OUTPUT_DIR  -d DETECTOR_TYPE -s YOUR_SCRIPT.mac key1 100 key2 10 ....
 ```
 
+**IMPORTANT**
+Even if you set the detector type in your script, it is still necessary to specify it using '-d DETECTOR_TYPE' option when running the simulation.
 
 ### Generators
 
@@ -110,7 +114,7 @@ There are three general purpose generators built in, `basic`, `range`, and `pola
 
 There is also a _Pythia8_ generator installed which behaves similiarly to the `range` generator.
 
-There is a `file_reader` generator that produces particles with properties that are specified in an input file. The `file_reader` does not do randomization. Each entry in the input file correspond to exactly one event and may include multiple particles, which means that the physics process to generate the primary partiles needs to be taken care of outside GEANT4. This generator provide the possibility to generate controllable primary vertex at given location with pre-assigned momentum for each secondary particles. 
+There is a `file_reader` generator that produces particles with properties that are specified in an input file. The `file_reader` does not do randomization. Each entry in the input file correspond to exactly one event and may include multiple particles, which means that the physics process to generate the primary partiles needs to be taken care of outside GEANT4. This generator provide the possibility to generate controllable primary vertex at given location with pre-assigned momentum for each secondary particles.
 
 The generator defaults are specified in `src/action/GeneratorAction.cc` but they can be overwritten by a custom generation script.
 
@@ -207,3 +211,10 @@ The output of MadGraph is not able to be read immediately by the file_reader gen
 
 It is recommended to use the scripts in the Mu-Background repository which submit jobs that run both these operations. 
 
+The output is a ROOT file. In the file, there are some metadata and a ROOT TTree. The tree name depends on the detector follwing the convention of \'{detectortype}_run\'. For example, a box detector will have tree name "box_run".
+
+Quantities in the ROOT TTree:
+
+| Key | Data type | Unit |Comment|
+|:-------|:----|:----:|:----|
+|Hit_x,y,z|vector| \[cm\]| In CMS coordinate|
