@@ -76,6 +76,7 @@ int RunManager::StartTracking()
 				n_cosmic = _digitizer->generator.Poisson(hndlr.par_map["cosmic_rate"]);
 			}
 			//adding cosmic events as chosen by poisson distribution
+			int n_added = 0; //This tracks the number of sim_hits added, needed for setting proper index
 			while (n_cosmic > 0) {
 				CH->index =(int)_digitizer->generator.Uniform(CH->NumEntries);
 				if (CH->Next() < 0) {
@@ -93,6 +94,7 @@ int RunManager::StartTracking()
 					}
 					_digitizer->AddHit(current);
 				}
+				n_added += CH->sim_numhits;
 				totalCosmic++;
 				n_cosmic -= 1;
 			}
@@ -100,7 +102,7 @@ int RunManager::StartTracking()
 			TH->LoadEvent();
 			//adding all hits of the tree into the digitizer
 			for (int n_hit = 0; n_hit < TH->sim_numhits; n_hit++){
-				physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_hit);
+				physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_added + n_hit);
 				TH->sim_hit_type_buf->push_back(0);
 				current->SetType(0);
 				if (hndlr.par_map["branch"] == 1.0) {
@@ -111,6 +113,7 @@ int RunManager::StartTracking()
 				nLHC++;
 				_digitizer->AddHit(current);
 			}
+			n_added += TH->sim_numhits;
 			std::vector<physics::digi_hit *> digi_list = _digitizer->Digitize();
 			
 
