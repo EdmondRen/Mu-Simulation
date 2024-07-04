@@ -104,6 +104,7 @@ int RunManager::StartTracking()
 			for (int n_hit = 0; n_hit < TH->sim_numhits; n_hit++){
 				physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_hit);
 				current->index += n_added; //Increasing index to be consistent after combination
+				current->track_id += n_added;
 				TH->sim_hit_type_buf->push_back(0);
 				current->SetType(0);
 				if (hndlr.par_map["branch"] == 1.0) {
