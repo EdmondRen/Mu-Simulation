@@ -81,7 +81,8 @@ std::vector<physics::digi_hit*> Digitizer::Digitize(){
 			if (e_sum > cuts::SiPM_energy_threshold){
 				physics::digi_hit* current_digi = new physics::digi_hit();
 				current_digi->det_id = current_id;
-				for (auto hit : used_hits){current_digi->AddHit(hit);}
+				for (auto hit : used_hits){
+					current_digi->AddHit(hit);}
 				current_digi->index = ( digis.size() );
 				digis.push_back(current_digi);
 				current_hits = unused_hits;

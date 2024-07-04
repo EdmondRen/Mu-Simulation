@@ -6,6 +6,7 @@ def parse_hepmc(filename):
     particles = []
     i = 1
     firstParticle = True
+    numOk = 0
     with open(filename) as f:
         while True:
         # for i in tqdm(range(100_00)):
@@ -25,14 +26,23 @@ def parse_hepmc(filename):
             # If it is a particle, is an end product, and is a muon or antimuon
             if (line[0]=="P") and (line[8]=="1") and ((line[2]=="13") or (line[2]=="-13")):
                     # Setting this to Geant4 coordinates and units to MeV/c
-                    momentum = [1000*float(line[5]), 1000*float(line[3]), -1000*float(line[4])]
-                    if math.sqrt(momentum[1]**2 + momentum[2]**2) >= float(sys.argv[3]):
+                    # momentum = [1000*float(line[5]), 1000*float(line[3]), -1000*float(line[4])]
+                    momentum = [1000*float(line[3]), 1000*float(line[4]), 1000*float(line[5])]
+                    pT = math.sqrt(momentum[1]**2 + momentum[2]**2)
+                    mom_mag = math.sqrt(momentum[0]**2 + momentum[1]**2 + momentum[2]**2)
+                    theta = math.acos(momentum[2]/mom_mag)
+                    phi = math.atan(momentum[1]/momentum[0])
+                    if (theta >= 0.769 and theta <= 1.019 and phi >= -0.262 and phi <= 0.262 and pT >= float(sys.argv[3])):
+                        print("In range")
+                        numOk +=1
+                    if math.sqrt(momentum[0]**2 + momentum[1]**2) >= float(sys.argv[3]):
                         if firstParticle:
                             particles.append(eventID)
                             firstParticle = False
                             i+=1
                         particle = [int(line[2])] + position + momentum
                         particles.append(particle)
+    print(numOk)
     return particles
 
 particles = parse_hepmc(sys.argv[1])

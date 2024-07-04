@@ -1,7 +1,7 @@
 
 #include "NoiseMaker.hh"
 
-double NoiseMaker::window = 1000*units::ns;
+double NoiseMaker::window = 600*units::ns;
 
 //------------------------------------------------------------------//
 
@@ -32,6 +32,7 @@ void NoiseMaker::preDigitizer(GeometryHandler* _geometry){
 	ParHandler hndlr;
 	hndlr.Handle();
 	double noise_hz = hndlr.par_map["noise_hz"];
+	//window = hndlr.par_map["noise_window"];
 	if(noise_hz>0){
 		run = true;
 		hits_per_second = noise_hz;
@@ -44,6 +45,7 @@ void NoiseMaker::preDigitizer(GeometryHandler* _geometry){
 		back_detIDs(detID_list, longCenters);
 
 		detID_q = detID_list.size();
+		std::cout<<"Number of scintillator bars: " << detID_q << std::endl;
 		double average_hits = window*rate_of_hits*detID_q;
 		std::cout<<"-------------------------------------------------------------------------"<<std::endl;
 		std::cout<<"NoiseMaker is turned on with "<<hits_per_second<<" hz noise rate over a window of "<<window<<" nanoseconds."<<std::endl;
@@ -235,6 +237,7 @@ void NoiseMaker::layer_detIDs(std::vector<detID>& _detID_list, std::vector<doubl
 				detID _id;
 		        if (yModule%2==0) _id = detID(yCenter, shortCenter, bar_direction, 0, idNumber);
 				else _id = detID(shortCenter, yCenter, bar_direction, 0, idNumber);
+				_id.SetGeometry(Geometry);
 				_detID_list.push_back(_id);
 				_longCenters.push_back(longCenter);
 			}
@@ -282,6 +285,7 @@ void NoiseMaker::back_detIDs(std::vector<detID>& _detID_list, std::vector<double
 				int idNumber = xIndex + xModule*num_x + (num_xMods*num_x)*yIndex;
 				idNumber = idNumber*100 + layerid;
 		        detID _id = detID(shortCenter, zCenter, bar_direction, 1, idNumber);
+				_id.SetGeometry(Geometry);
 				_detID_list.push_back(_id);
 				_longCenters.push_back(longCenter);
 			}
@@ -322,6 +326,7 @@ void NoiseMaker::wall_detIDs(std::vector<detID>& _detID_list, std::vector<double
 				int idNumber = xIndex + num_x*yIndex;
 				idNumber = idNumber*100 + layerid;
 				detID _id = detID(shortCenter, zCenter, bar_direction, 1, idNumber);
+				_id.SetGeometry(Geometry);
 				_detID_list.push_back(_id);
 				_longCenters.push_back(longCenter);
 			}
@@ -362,6 +367,7 @@ void NoiseMaker::floor_detIDs(std::vector<detID>& _detID_list, std::vector<doubl
 				detID _id;
 				if (yModule%2==0) _id = detID(yCenter, shortCenter, bar_direction, 0, idNumber);
 				else _id = detID(shortCenter, yCenter, bar_direction, 0, idNumber);
+				_id.SetGeometry(Geometry);
 				_detID_list.push_back(_id);
 				_longCenters.push_back(longCenter);
 			}

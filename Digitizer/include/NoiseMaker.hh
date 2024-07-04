@@ -16,6 +16,7 @@ public:
 	std::vector<physics::digi_hit*> return_digis(); //returns noise digihits to digitizer to be added
 	const static bool ts = false;//trouble shoot, turns on and off some messages 
 	inline static bool run; //determines if the noisemaker will run or not, set as true if noise_hz in par_card > 0
+	static double window; //window of inserting hits after start of each event
 private:
 	void get_real_hits(std::vector<physics::digi_hit*> digis); //grabs information from digi hits about timing and location of real hits
 	std::vector<double> event_timing(detID id, int hit_q); //decides the timing of the new hits for each detID
@@ -33,7 +34,6 @@ private:
 
 	
 	//static values, most used in preDigitizer()	
-	static double window; //window of inserting hits after start of each event
 	inline static double hits_per_second; //integer number of hits per second
 	inline static double rate_of_hits;//hits_per_second divided by the correct number of nanoseconds
 	inline static GeometryHandler* Geometry;	

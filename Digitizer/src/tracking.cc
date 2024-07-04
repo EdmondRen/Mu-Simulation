@@ -19,12 +19,20 @@ int main(int argc, char *argv[]){
 
 	int i = 1;
 	bool input = false;
+	bool cosmic = false;
 	while (i < argc) {
 		if (strcmp("-l", argv[i]) == 0) {
-			LHCfiles = io::ProcessDirectory(argv[i+1], "");
+			if (io::is_directory(argv[i+1]))
+				LHCfiles = io::ProcessDirectory(argv[i+1], "");
+			else 
+				LHCfiles.push_back(argv[i+1]);
 			input = true;
 		} else if (strcmp("-c", argv[i]) == 0) {
-			CosmicFiles = io::ProcessDirectory(argv[i+1], "");
+			if (io::is_directory(argv[i+1]))
+				CosmicFiles = io::ProcessDirectory(argv[i+1], "");
+			else 
+				CosmicFiles.push_back(argv[i+1]);
+			cosmic = true;
 		} else if (strcmp("-o", argv[i]) == 0) {
 			outdir = TString(argv[i+1]);
 		} else if (!input) {
@@ -38,22 +46,18 @@ int main(int argc, char *argv[]){
 	RunManager RM;
 	RM.SetOutputFile(outdir);
 
-	for (auto f : LHCfiles ){
+	for (int i = 0; i < LHCfiles.size(); i++) {
+		auto f = LHCfiles[i];
 		std::cout << f << std::endl;
+		if (cosmic) {
+			//For now, this assumes 1-1 and if not, re-loop through
+			int cosmic_index = i % CosmicFiles.size();
+			RM.SetCosmicFile(CosmicFiles[cosmic_index]);
+			std::cout << "running cosmic" << std::endl;
+		}
 		RM.SetInputFile(f);
 		RM.StartTracking();
 	} 
-
-	for (auto f : CosmicFiles ){
-		std::cout << f << std::endl;
-		RM.SetInputFile(f);
-		RM.StartTracking();
-	} 
-
-	
-
-		
-
 
 	return 0;
 
