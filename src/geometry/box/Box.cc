@@ -66,10 +66,10 @@ G4ThreadLocal Tracking::HitCollection* _hit_collection;
 //__Box Specification Variables_________________________________________________________________
 
 constexpr int NMODULES{16};
-constexpr int n_top_layers{4};
+constexpr int n_top_layers{6};
 constexpr int n_floor_layers{2};
 constexpr int n_wall_layers{2};
-constexpr int n_back_layers = sqrt(NMODULES);
+constexpr int n_back_layers = n_top_layers;
 constexpr auto x_edge_length = 39.0*m;
 constexpr auto y_edge_length = 39.0*m;
 constexpr auto x_displacement = 70.0*m;
@@ -89,7 +89,9 @@ constexpr auto shelf_y_edge_length = 9.0*m;
 
 constexpr auto steel_height = 0.03*m;
 
-constexpr auto air_gap = 16*m; // Total volume height that has air inside
+constexpr auto air_gap = 16*m; // Height of hole to be placed in ground
+constexpr auto air_gap_displacement = 9.5*m; // displement of hole to be placed in ground
+
 constexpr auto air_gap_decay = 12.6*m; // height of decay volume
 
 constexpr auto scintillator_casing_thickness = 0.003*m;
@@ -438,7 +440,7 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 		normal = 2;
 		z_module = int((local_position.z()-x_edge_length)/(layer_w_case + layer_spacing_top));
 		center2 = z_module*(layer_w_case + layer_spacing_top) + 0.5*layer_w_case + x_edge_length + x_displacement;
-		layerID = z_module + n_wall_layers + n_floor_layers + sqrt(NMODULES);
+		layerID = z_module + n_wall_layers + n_floor_layers + n_top_layers;
 		bool x_long = z_module % 2; // Even -> x-direction is long
 		//BOTTOM of back wall = First top layer - module's dimension
 		double y_back_displacement = layer_z_world[n_floor_layers] - module_x_edge_length; 
@@ -763,7 +765,7 @@ namespace CMS{
 										   Construction::Box("AirBox", x_edge_length + x_edge_increase, y_edge_length, air_gap),
 										   Construction::Transform(0.5L*x_edge_length + x_displacement,
 																   0.5L*y_edge_length + y_displacement,
-																   0.5L*(air_gap-Earth::TotalDepth()) -9.50*m ));
+																   0.5L*(-air_gap-Earth::TotalDepth()) - air_gap_displacement ));
 
     return Construction::Volume(modified);
   }
@@ -906,7 +908,7 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 																Construction::Box("AirBox", x_edge_length + x_edge_increase, y_edge_length, air_gap),
 																Construction::Transform(0.5L*x_edge_length + x_displacement,
 																0.5L*y_edge_length + y_displacement,
-															    0.5L*(air_gap-Earth::SandstoneDepth()) - 9.50*m)),
+															    0.5L*(-air_gap-Earth::SandstoneDepth()) - air_gap_displacement)),
 									        	                Earth::Material::SiO2);
 
 	Construction::PlaceVolume(modified, earth, Earth::SandstoneTransform());
