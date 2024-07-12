@@ -199,6 +199,8 @@ std::vector<physics::digi_hit*> Digitizer::Digitize(){
 			digi->z = smeared_z;
 		} else {
             std::cout << "Not supposed to be here!" << std::endl;
+	    std::cout << current_id.normal << std::endl;
+	    std::cout << long_direction_index << std::endl;
         }
 		digis_not_dropped.push_back(digi); // it's a tracking / trigger layer hit, so it will never be dropped
 	}

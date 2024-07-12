@@ -31,7 +31,10 @@ public:
 	void AddHit(physics::sim_hit *hit){
 		if (!hit->det_id.IsNull()) {
 			hits.push_back(hit);
-		} else null_num++;
+		} else {
+			null_num++;
+			std::cout << "Added a null hit" << std::endl;
+		}
 	}
 
 	void clear(){
