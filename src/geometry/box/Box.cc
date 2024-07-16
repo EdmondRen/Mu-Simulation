@@ -765,7 +765,7 @@ namespace CMS{
 										   Construction::Box("AirBox", x_edge_length + x_edge_increase, y_edge_length, air_gap),
 										   Construction::Transform(0.5L*x_edge_length + x_displacement,
 																   0.5L*y_edge_length + y_displacement,
-																   0.5L*(-air_gap-Earth::TotalDepth()) - air_gap_displacement ));
+																   0.5L*(air_gap-Earth::TotalDepth()) - air_gap_displacement ));
 
     return Construction::Volume(modified);
   }
@@ -851,6 +851,9 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 
 	auto earth = CMS::EarthVolume();
 
+	earth->SetVisAttributes(HighlightRed());
+	//TO DELETE
+
 	const auto mix_top = Earth::TotalDepth() - Earth::MixDepth();
 	const auto marl_top = mix_top - Earth::MarlDepth();
 	const auto sandstone_top = marl_top - Earth::SandstoneDepth();
@@ -908,7 +911,7 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 																Construction::Box("AirBox", x_edge_length + x_edge_increase, y_edge_length, air_gap),
 																Construction::Transform(0.5L*x_edge_length + x_displacement,
 																0.5L*y_edge_length + y_displacement,
-															    0.5L*(-air_gap-Earth::SandstoneDepth()) - air_gap_displacement)),
+															    0.5L*(air_gap-Earth::SandstoneDepth()) - air_gap_displacement)),
 									        	                Earth::Material::SiO2);
 
 	Construction::PlaceVolume(modified, earth, Earth::SandstoneTransform());
