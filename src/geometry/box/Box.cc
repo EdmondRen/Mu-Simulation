@@ -69,7 +69,7 @@ constexpr int NMODULES{16};
 constexpr int n_top_layers{6};
 constexpr int n_floor_layers{2};
 constexpr int n_wall_layers{2};
-constexpr int n_back_layers = sqrt(NMODULES);
+constexpr int n_back_layers = n_top_layers;
 constexpr auto x_edge_length = 39.0*m;
 constexpr auto y_edge_length = 39.0*m;
 constexpr auto x_displacement = 70.0*m;
@@ -440,7 +440,7 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 		normal = 2;
 		z_module = int((local_position.z()-x_edge_length)/(layer_w_case + layer_spacing_top));
 		center2 = z_module*(layer_w_case + layer_spacing_top) + 0.5*layer_w_case + x_edge_length + x_displacement;
-		layerID = z_module + n_wall_layers + n_floor_layers + sqrt(NMODULES);
+		layerID = z_module + n_wall_layers + n_floor_layers + n_top_layers;
 		bool x_long = z_module % 2; // Even -> x-direction is long
 		//BOTTOM of back wall = First top layer - module's dimension
 		double y_back_displacement = layer_z_world[n_floor_layers] - module_x_edge_length; 
