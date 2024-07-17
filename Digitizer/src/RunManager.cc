@@ -13,7 +13,7 @@
 
 int RunManager::StartTracking()
 {
-
+// ---------- Declaring Tree Handlers and setting up geometry ---------------------------------------
 	TH = new TreeHandler(_InputTree_Name, _InputFile_Name, _OutputTree_Name, OutFileName());
 	if (TH->IsNull()) {
 		std::cout << "Sorry, I couldn't open that file" << std::endl;
@@ -49,6 +49,27 @@ int RunManager::StartTracking()
 	ParHandler hndlr;
 	hndlr.Handle();
 
+// ---------- Finding excluded layers (if any) ------------------------------------------------------
+	//Getting the layers that we will not be including
+	std::vector<int> excludedLayers;
+	int diff = (int)(_geometry.GetYLayers().size()/2) - hndlr.par_map["n_layers"];
+	for (int i = 0; i < diff; i++){
+		// Remove the horizontal tracking layers
+		int layerNum = (int)(_geometry.GetZWalls().size()/2) 
+		+ (int)(_geometry.GetYFloor().size()/2) 
+		+ (int)(_geometry.GetYLayers().size()/2) 
+		- i - 1;
+		excludedLayers.push_back(layerNum);
+		// Remove the back wall tracking layers
+		layerNum = (int)(_geometry.GetZWalls().size()/2) 
+		+ (int)(_geometry.GetYFloor().size()/2) 
+		+ (int)(_geometry.GetYLayers().size()/2) 
+		+ (int)(_geometry.GetZBack().size()/2)
+		- i - 1;
+		excludedLayers.push_back(layerNum);
+	}
+		
+// ---------- Loop through main tree ----------------------------------------------------------------
 	if (hndlr.par_map["branch"] == 1.0) std::cout << "Running in Cosmic Mode" << std::endl;
 
 	_digitizer->par_handler = &hndlr;
@@ -76,7 +97,13 @@ int RunManager::StartTracking()
 			int n_added = 0; //This tracks the number of sim_hits added, needed for setting proper index
 			//adding all hits of the tree into the digitizer
 			for (int n_hit = 0; n_hit < TH->sim_numhits; n_hit++){
-				physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_hit);
+				physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_added);
+				//Check if sim hit is in an excluded layer
+				std::cout << excludedLayers.size() << std::endl;
+				//if (excludedLayers.size() != 0 && std::find(excludedLayers.begin(), excludedLayers.end(), current->det_id.layerID) 
+				//!= excludedLayers.end()) { 
+			//		continue;
+			//	}
 				TH->sim_hit_type_buf->push_back(0);
 				current->SetType(0);
 				if (hndlr.par_map["branch"] == 1.0) {
@@ -86,14 +113,27 @@ int RunManager::StartTracking()
 				}
 				nLHC++;
 				_digitizer->AddHit(current);
+				//n_added++;
 			}
 			n_added = TH->sim_numhits;
 
 			//Doing cosmic (if any)
+			//The following is used to assign unique track IDs that would otherwise be duplicated
 			int n_cosmic = 0;	
+			std::map<int, int> trackIDChanger;
+			int maxID;
+			int curID;
 			if (cosmic){
 				n_cosmic = _digitizer->generator.Poisson(hndlr.par_map["cosmic_rate"]);
+				maxID = 0; // For setting new track IDs so there are no duplicates
+				for (int n_hit = 0; n_hit < n_added; n_hit++){
+					if (_digitizer->hits[n_hit]->track_id > maxID) {
+						maxID = _digitizer->hits[n_hit]->track_id;
+					}
+				}
+				maxID++;
 			}
+			std::cout << "Got Max ID" << std::endl;
 			//adding cosmic events as chosen by poisson distribution
 			while (n_cosmic > 0) {
 				CH->index =(int)_digitizer->generator.Uniform(CH->NumEntries);
@@ -103,9 +143,24 @@ int RunManager::StartTracking()
 				CH->LoadEvent();
 				for (int n_hit = 0; n_hit < CH->sim_numhits; n_hit++){
 					physics::sim_hit *current = new physics::sim_hit(CH, &_geometry, n_hit);
-					current->index = n_hit + n_added; //Increasing index to be consistent after combination
-					current->track_id += n_added;
-					current->particle_parent_trackid += n_added;
+					//if (excludedLayers.size() != 0 && std::find(excludedLayers.begin(), excludedLayers.end(), current->det_id.layerID) 
+					//!= excludedLayers.end()) { 
+					//	continue;
+					//}
+					current->index = n_hit + n_added;
+					//current->index = nLHC + n_added;
+					//Reassigning track IDs to new ones
+					curID = current->track_id;
+					for (int oldHit = 0; oldHit < n_added; oldHit++) {
+						if (curID == _digitizer->hits[oldHit]->track_id) {
+							//This one not added yet
+							if (trackIDChanger.find(curID) == trackIDChanger.end()){
+								trackIDChanger[curID] = maxID;
+								maxID++;
+							}
+							current->track_id = maxID;
+						}
+					}
 					CH->sim_hit_type_buf->push_back(1);
 					current->SetType(1);
 					if (hndlr.par_map["branch"] == 1.0) {
@@ -114,15 +169,20 @@ int RunManager::StartTracking()
 						current->z += detector::COSMIC_SHIFT[2];
 					}
 					_digitizer->AddHit(current);
+					//n_added++;
 				}
 				n_added += CH->sim_numhits;
 				totalCosmic++;
 				n_cosmic -= 1;
 			}
+			std::cout << "Checked CH Loading" <<std::endl;
 
 			std::vector<physics::digi_hit *> digi_list = _digitizer->Digitize();
 			if (digi_list.size() == 0) {
 				std::cout << "No digis" << std::endl;
+			}
+			if (_digitizer->hits.size() == 0) {
+				std::cout << "No sim hits" << std::endl;
 			}
 
 			std::vector<physics::digi_hit*> noise_digis;
