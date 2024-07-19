@@ -92,7 +92,7 @@ constexpr auto steel_height = 0.03*m;
 constexpr auto air_gap = 16*m; // Height of hole to be placed in ground
 constexpr auto air_gap_displacement = 9.5*m; // displement of hole to be placed in ground
 
-constexpr auto air_gap_decay = 12.6*m; // height of decay volume
+constexpr auto air_gap_decay = 10.968*m; // height of decay volume
 
 constexpr auto scintillator_casing_thickness = 0.003*m;
 
@@ -111,13 +111,15 @@ constexpr auto wall_gap2 = 1.0*m;
 //These are only for the logical volume, so they don't matter too much.
 constexpr auto x_front_wall = 2*(n_wall_layers)*full_layer_height + 2*wall_gap2 + 2*(n_wall_layers)*wall_gap; //double what you need, since it is symmetric on either side
 constexpr auto x_back_wall = 2*(n_back_layers)*full_layer_height + 2*(n_back_layers)*layer_spacing_top;
+constexpr auto back_wall_top = 13.462*m; // Top of the back wall from the ground. (bottom of the second wall layer right now)
 constexpr auto x_edge_increase = x_front_wall + x_back_wall;
 
 constexpr auto layer_w_case = full_layer_height;
 
 constexpr auto full_module_height =  air_gap_decay + n_top_layers*layer_w_case + (n_top_layers - 1)*layer_spacing_top;
 
-constexpr auto wall_height = (n_floor_layers*full_layer_height + layer_spacing + air_gap_decay);
+//constexpr auto wall_height = (n_floor_layers*full_layer_height + layer_spacing + air_gap_decay);
+constexpr auto wall_height = (back_wall_top - steel_height);
 
 constexpr int NBEAMLAYERS = n_top_layers;
 constexpr auto beam_x_edge_length = 0.10*m;
@@ -210,8 +212,8 @@ TTree* Detector::addGeometry() {
 	double z_end = (x_displacement + x_edge_length) / Units::Length;
 	double wall_start = z_displacement / Units::Length;
 	double wall_end = (z_displacement + wall_height) / Units::Length;
-	double back_start = (layer_z_world[n_floor_layers] + z_displacement - module_x_edge_length) / Units::Length;
-	double back_end = (layer_z_world[n_floor_layers] + z_displacement) / Units::Length;
+	double back_start = (back_wall_top + z_displacement - module_x_edge_length) / Units::Length;
+	double back_end = (back_wall_top + z_displacement) / Units::Length;
 	double length = scint_x_edge_length / Units::Length;
 	double width = scint_y_edge_length / Units::Length;
 	double thickness = scintillator_height / Units::Length;
@@ -443,7 +445,7 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 		layerID = z_module + n_wall_layers + n_floor_layers + n_top_layers;
 		bool x_long = z_module % 2; // Even -> x-direction is long
 		//BOTTOM of back wall = First top layer - module's dimension
-		double y_back_displacement = layer_z_world[n_floor_layers] - module_x_edge_length; 
+		double y_back_displacement = back_wall_top - module_x_edge_length; 
 		for (int i = 0; i < int(sqrt(NMODULES)); i++){
 			auto coord = get_module_y_displacement(i) + 0.5*(y_edge_length-module_y_edge_length);
 			if (local_position.x() >= coord && local_position.x() <= coord + module_x_edge_length){
@@ -657,7 +659,7 @@ G4VPhysicalVolume* Detector::ConstructWallModule(G4LogicalVolume* DetectorVolume
 
 
 	return Construction::PlaceVolume(ModuleVolume, DetectorVolume,
-			Construction::Transform(0.5*x_edge_length + 0.5*x_size, get_module_y_displacement(tag_number), 0.5*(z_size + full_detector_height) - layer_z_world[n_floor_layers] ));
+			Construction::Transform(0.5*x_edge_length + 0.5*x_size, get_module_y_displacement(tag_number), 0.5*(z_size + full_detector_height) - back_wall_top));
 }
 
 //__Build Detector______________________________________________________________________________
@@ -765,7 +767,7 @@ namespace CMS{
 										   Construction::Box("AirBox", x_edge_length + x_edge_increase, y_edge_length, air_gap),
 										   Construction::Transform(0.5L*x_edge_length + x_displacement,
 																   0.5L*y_edge_length + y_displacement,
-																   0.5L*(air_gap-Earth::TotalDepth()) - air_gap_displacement ));
+																   0.5L*(-air_gap-Earth::TotalDepth()) - air_gap_displacement ));
 
     return Construction::Volume(modified);
   }
@@ -911,7 +913,7 @@ G4VPhysicalVolume* Detector::ConstructEarth(G4LogicalVolume* world){
 																Construction::Box("AirBox", x_edge_length + x_edge_increase, y_edge_length, air_gap),
 																Construction::Transform(0.5L*x_edge_length + x_displacement,
 																0.5L*y_edge_length + y_displacement,
-															    0.5L*(air_gap-Earth::SandstoneDepth()) - air_gap_displacement)),
+															    0.5L*(-air_gap-Earth::SandstoneDepth()) - air_gap_displacement)),
 									        	                Earth::Material::SiO2);
 
 	Construction::PlaceVolume(modified, earth, Earth::SandstoneTransform());
