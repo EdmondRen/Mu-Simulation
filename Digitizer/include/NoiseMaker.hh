@@ -37,6 +37,7 @@ private:
 	inline static double hits_per_second; //integer number of hits per second
 	inline static double rate_of_hits;//hits_per_second divided by the correct number of nanoseconds
 	inline static GeometryHandler* Geometry;	
+	inline static ParHandler hndlr;
 	inline static std::vector<detID> detID_list; //list of all detIDs in the detector
 	inline static std::vector<double> longCenters; //Centers in the long direction of the bar
 	inline static int detID_q; //total quantity of detIDs

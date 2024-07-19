@@ -12,6 +12,10 @@ scint_efficiency 0.001
 # - end_ev: end event index (not included)
 # - cosmic_rate: average number of cosmic events per lhc event
 start_ev 0.0
-end_ev 100000.0
-noise_hz 0.0
-cosmic_rate 0.0
+end_ev 1000000.0
+noise_hz 337.5
+#noise_hz 33.75
+#noise_hz 0.0
+cosmic_rate 1.0294
+n_layers 4
+#cosmic_rate 0

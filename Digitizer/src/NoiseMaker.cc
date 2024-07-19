@@ -29,7 +29,6 @@ NoiseMaker::NoiseMaker(std::vector<physics::digi_hit*>& digis){
 
 void NoiseMaker::preDigitizer(GeometryHandler* _geometry){
 	Geometry = _geometry;
-	ParHandler hndlr;
 	hndlr.Handle();
 	double noise_hz = hndlr.par_map["noise_hz"];
 	//window = hndlr.par_map["noise_window"];
@@ -204,7 +203,9 @@ void NoiseMaker::layer_detIDs(std::vector<detID>& _detID_list, std::vector<doubl
 	int num_zMods = (int)(Geometry->GetZModule().size()/2);// number of zModules
 	int num_x, num_z, bar_direction;
 	double shortCenter, longCenter;
-    for (int yModule = 0; yModule < (int)(Geometry->GetYLayers().size()/2); yModule++){
+	int nLayers = hndlr.par_map["n_layers"];
+    for (int yModule = 0; yModule < nLayers; yModule++){
+    //for (int yModule = 0; yModule < (int)(Geometry->GetYLayers().size()/2); yModule++){
     	int layerid = (int)(Geometry->GetYFloor().size()/2) + 
 					  (int)(Geometry->GetZWalls().size()/2) + yModule;
 		double yCenter = (Geometry->GetYLayers()[yModule*2] + Geometry->GetYLayers()[yModule*2+1])/2;
@@ -256,7 +257,8 @@ void NoiseMaker::back_detIDs(std::vector<detID>& _detID_list, std::vector<double
 	int num_xMods = (int)(Geometry->GetXModule().size()/2);
 	int num_x, num_y, bar_direction;
 	double shortCenter, longCenter;
-    for (int zModule = 0; zModule < (int)(Geometry->GetZBack().size()/2); zModule++){
+	int nLayers = hndlr.par_map["n_layers"];
+    for (int zModule = 0; zModule < nLayers; zModule++){
     	int layerid = (int)(Geometry->GetYFloor().size()/2) + 
 					  (int)(Geometry->GetZWalls().size()/2) + 
 					  (int)(Geometry->GetYLayers().size()/2) + zModule;

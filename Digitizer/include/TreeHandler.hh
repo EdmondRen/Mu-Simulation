@@ -423,6 +423,8 @@ public:
 		sim_hit_py_buf->insert(sim_hit_py_buf->end(), sim_hit_py->begin(), sim_hit_py->end());
 		sim_hit_pz_buf->insert(sim_hit_pz_buf->end(), sim_hit_pz->begin(), sim_hit_pz->end());
 		sim_GenParticle_index_buf->insert(sim_GenParticle_index_buf->end(), sim_GenParticle_index->begin(), sim_GenParticle_index->end());
+		sim_GenParticle_G4index_buf->insert(sim_GenParticle_G4index_buf->end(), sim_GenParticle_G4index->begin(), sim_GenParticle_G4index->end());
+		sim_GenParticle_pdgid_buf->insert(sim_GenParticle_pdgid_buf->end(), sim_GenParticle_pdgid->begin(), sim_GenParticle_pdgid->end());
 		sim_GenParticle_time_buf->insert(sim_GenParticle_time_buf->end(), sim_GenParticle_time->begin(), sim_GenParticle_time->end());
 		sim_GenParticle_x_buf->insert(sim_GenParticle_x_buf->end(), sim_GenParticle_x->begin(), sim_GenParticle_x->end());
 		sim_GenParticle_y_buf->insert(sim_GenParticle_y_buf->end(), sim_GenParticle_y->begin(), sim_GenParticle_y->end());
