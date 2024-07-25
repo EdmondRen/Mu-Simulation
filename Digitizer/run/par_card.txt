@@ -17,5 +17,5 @@ noise_hz 337.5
 #noise_hz 33.75
 #noise_hz 0.0
 cosmic_rate 1.0294
-n_layers 4
+n_layers 6
 #cosmic_rate 0
