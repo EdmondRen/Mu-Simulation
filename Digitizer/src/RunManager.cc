@@ -13,7 +13,7 @@
 
 int RunManager::StartTracking()
 {
-
+// ---------- Declaring Tree Handlers and setting up geometry ---------------------------------------
 	TH = new TreeHandler(_InputTree_Name, _InputFile_Name, _OutputTree_Name, OutFileName());
 	if (TH->IsNull()) {
 		std::cout << "Sorry, I couldn't open that file" << std::endl;
@@ -49,6 +49,26 @@ int RunManager::StartTracking()
 	ParHandler hndlr;
 	hndlr.Handle();
 
+// ---------- Finding excluded layers (if any) ------------------------------------------------------
+	//Getting the layers that we will not be including
+	std::vector<int> excludedLayers;
+	int diff = (int)(_geometry.GetYLayers().size()/2) - hndlr.par_map["n_layers"];
+	for (int i = 0; i < diff; i++){
+		// Remove the horizontal tracking layers
+		int layerNum = (int)(_geometry.GetZWalls().size()/2) 
+		+ (int)(_geometry.GetYFloor().size()/2) 
+		+ i;
+		excludedLayers.push_back(layerNum);
+		// Remove the back wall tracking layers
+		layerNum = (int)(_geometry.GetZWalls().size()/2) 
+		+ (int)(_geometry.GetYFloor().size()/2) 
+		+ (int)(_geometry.GetYLayers().size()/2) 
+		+ (int)(_geometry.GetZBack().size()/2)
+		- i - 1;
+		excludedLayers.push_back(layerNum);
+	}
+		
+// ---------- Loop through main tree ----------------------------------------------------------------
 	if (hndlr.par_map["branch"] == 1.0) std::cout << "Running in Cosmic Mode" << std::endl;
 
 	_digitizer->par_handler = &hndlr;
@@ -70,14 +90,51 @@ int RunManager::StartTracking()
 
 			TotalEventsProcessed++;
 			_digitizer->clear();
+			std::cout << "Loading Event" << std::endl;
+			TH->LoadEvent();
+			std::cout << "Loaded Event" << std::endl;
+
+			int n_added = 0; //This tracks the number of sim_hits added, needed for setting proper index
+			int n_TH = 0; // Number of sim_hits added from TH
+			//adding all hits of the tree into the digitizer
+			for (int n_hit = 0; n_hit < TH->sim_numhits; n_hit++){
+				//physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_hit);
+				physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_hit);
+				//Check if sim hit is in an excluded layer
+				current->index = n_added;
+				TH->sim_hit_type_buf->push_back(0);
+				current->SetType(0);
+				if (hndlr.par_map["branch"] == 1.0) {
+					current->x += detector::COSMIC_SHIFT[0];
+					current->y += detector::COSMIC_SHIFT[1];
+					current->z += detector::COSMIC_SHIFT[2];
+				}
+				if (excludedLayers.size() == 0 || std::find(excludedLayers.begin(), excludedLayers.end(), current->det_id.layerID) 
+				== excludedLayers.end()) { //Not an exluded layer, so we add it
+					_digitizer->AddHit(current);
+					n_TH++;
+				}
+				nLHC++;
+				n_added++;
+			}
 
 			//Doing cosmic (if any)
+			//The following is used to assign unique track IDs that would otherwise be duplicated
 			int n_cosmic = 0;	
+			std::map<int, int> trackIDChanger;
+			int maxID;
+			int curID;
 			if (cosmic){
 				n_cosmic = _digitizer->generator.Poisson(hndlr.par_map["cosmic_rate"]);
+				maxID = 0; // For setting new track IDs so there are no duplicates
+				for (int n_hit = 0; n_hit < n_TH; n_hit++){
+					if (_digitizer->hits[n_hit]->track_id > maxID) {
+						maxID = _digitizer->hits[n_hit]->track_id;
+					}
+				}
+				maxID++;
 			}
 			//adding cosmic events as chosen by poisson distribution
-			int n_added = 0; //This tracks the number of sim_hits added, needed for setting proper index
 			while (n_cosmic > 0) {
 				CH->index =(int)_digitizer->generator.Uniform(CH->NumEntries);
 				if (CH->Next() < 0) {
@@ -86,63 +143,62 @@ int RunManager::StartTracking()
 				CH->LoadEvent();
 				for (int n_hit = 0; n_hit < CH->sim_numhits; n_hit++){
 					physics::sim_hit *current = new physics::sim_hit(CH, &_geometry, n_hit);
+					//if (excludedLayers.size() != 0 && std::find(excludedLayers.begin(), excludedLayers.end(), current->det_id.layerID) 
+					//!= excludedLayers.end()) { 
+						//std::cout << "Layer ID " << current->det_id.layerID << std::endl;
+				//		continue;
+				//	}
+					current->index = n_added;
 					CH->sim_hit_type_buf->push_back(1);
 					current->SetType(1);
+					//Reassigning track IDs to new ones
+					curID = current->track_id;
+					for (int oldHit = 0; oldHit < n_TH; oldHit++) {
+						if (curID == _digitizer->hits[oldHit]->track_id) {
+							//This one not added yet
+							if (trackIDChanger.find(curID) == trackIDChanger.end()){
+								trackIDChanger[curID] = maxID;
+								current->track_id = maxID;
+								maxID++;
+							} else {
+								current->track_id = maxID;
+							}
+						}
+					}
 					if (hndlr.par_map["branch"] == 1.0) {
 						current->x += detector::COSMIC_SHIFT[0];
 						current->y += detector::COSMIC_SHIFT[1];
 						current->z += detector::COSMIC_SHIFT[2];
 					}
-					_digitizer->AddHit(current);
+					if (excludedLayers.size() == 0 || std::find(excludedLayers.begin(), excludedLayers.end(), current->det_id.layerID) 
+					== excludedLayers.end()) { // Then it's not excluded so we digitize it
+						_digitizer->AddHit(current);
+					}
+					n_added++;
 				}
-				n_added += CH->sim_numhits;
 				totalCosmic++;
 				n_cosmic -= 1;
 			}
-			// copying the data to the new tree, and loading all the variables, incrementing index
-			TH->LoadEvent();
-			
-			//adding all hits of the tree into the digitizer
-			for (int n_hit = 0; n_hit < TH->sim_numhits; n_hit++){
-				physics::sim_hit *current = new physics::sim_hit(TH, &_geometry, n_hit);
-				current->index = n_hit + n_added; //Increasing index to be consistent after combination
-				current->track_id += n_added;
-				for (int oldHit = 0; oldHit < n_added; oldHit ++) {
-					if (_digitizer->hits[oldHit]->track_id == current->track_id) {
-						std::cout << "Duplicated Track IDs" << std::endl;
-					}
-					if (_digitizer->hits[oldHit]->index == current->index){
-						std::cout << "Duplicated index" << std::endl;
-					}
-				}
-				current->particle_parent_trackid += n_added;
-				TH->sim_hit_type_buf->push_back(0);
-				current->SetType(0);
-				if (hndlr.par_map["branch"] == 1.0) {
-					current->x += detector::COSMIC_SHIFT[0];
-					current->y += detector::COSMIC_SHIFT[1];
-					current->z += detector::COSMIC_SHIFT[2];
-				}
-				nLHC++;
-				_digitizer->AddHit(current);
-			}
-			n_added += TH->sim_numhits;
 			std::vector<physics::digi_hit *> digi_list = _digitizer->Digitize();
-			
-
+			if (digi_list.size() == 0) {
+				std::cout << "No digis" << std::endl;
+			}
+			if (_digitizer->hits.size() == 0) {
+				std::cout << "No sim hits" << std::endl;
+			}
 			std::vector<physics::digi_hit*> noise_digis;
 			if(NoiseMaker::run){
-                NoiseMaker* noise = new NoiseMaker(digi_list);
-                noise_digis = noise->return_digis();
-                for(auto digi:noise_digis){
+				NoiseMaker* noise = new NoiseMaker(digi_list);
+				noise_digis = noise->return_digis();
+				for(auto digi:noise_digis){
 					digi->SetType(2);
 					digi_list.push_back(digi);
 					nNoise++;
-                }
-        	}
+                		}
+        		}
 			TH->ExportDigis(digi_list, _digitizer->seed);
-
 			TH->Fill();
+			std::cout << "Finished Filling" << std::endl;
 
 			dropped_hits += _digitizer->dropped_hits;
 			floor_wall_hits += _digitizer->floor_wall_hits;
