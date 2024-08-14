@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
 
   const auto generator = gen_opt.argument ? gen_opt.argument : "basic";
   const auto data_dir = data_opt.argument ? data_opt.argument : "data";
-  const auto debug = quiet_opt.count==1;
+  const auto debug = debug_opt.count==1;
   run->SetUserInitialization(new ActionInitialization(generator, data_dir, debug));
 
 
