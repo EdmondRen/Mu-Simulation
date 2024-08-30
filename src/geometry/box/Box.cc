@@ -357,6 +357,22 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
 
   const auto local_position = new_position.vect() - G4ThreeVector(y_displacement, z_displacement, x_displacement);
 
+	// Tom 2024-08-30: Find the parent particle
+	// If the particle has a parent (i.e., parentID > 0)
+	// G4int parentPDGID = 0;
+	// if (parentID > 0)
+	// {
+	// 	// Access the particle definition of the parent particle
+	// 	const G4Track* parentTrack = track->GetStep()->GetPreStepPoint()->GetTouchableHandle()->GetHistory()->GetTrack(parentID);
+	// 	// Get the PDG ID of the parent particle
+	// 	if (parentTrack)
+	// 	{
+	// 		parentPDGID = parentTrack->GetDefinition()->GetPDGEncoding();
+	// 		// Now you can use parentPDGID as needed
+	// 		G4cout << "Parent PDG ID: " << parentPDGID << G4endl;
+	// 	}
+	// }  
+
  	size_t x_index = 0;
     size_t x_module = 0;	
 	size_t y_index = 0;
