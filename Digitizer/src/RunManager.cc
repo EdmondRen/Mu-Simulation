@@ -76,6 +76,14 @@ int RunManager::StartTracking()
 	NoiseMaker::preDigitizer(&_geometry);
 	
 	_digitizer->InitGenerators();
+
+	if (cosmic){
+		// Start at a random point in the cosmic file
+		CH->index =(int)_digitizer->generator.Uniform(CH->NumEntries);
+		if (CH->Next() < 0) {
+			CH->index = 0;// for now, just loop back to start	
+		}			
+	}
 	
 	while (TH->Next() >= 0)
 	{
@@ -90,9 +98,9 @@ int RunManager::StartTracking()
 
 			TotalEventsProcessed++;
 			_digitizer->clear();
-			std::cout << "Loading Event" << std::endl;
+			// std::cout << "Loading Event" << std::endl;
 			TH->LoadEvent();
-			std::cout << "Loaded Event" << std::endl;
+			// std::cout << "Loaded Event" << std::endl;
 
 			int n_added = 0; //This tracks the number of sim_hits added, needed for setting proper index
 			int n_TH = 0; // Number of sim_hits added from TH
@@ -135,19 +143,16 @@ int RunManager::StartTracking()
 				maxID++;
 			}
 			//adding cosmic events as chosen by poisson distribution
+			// std::cout << "n cosmic " << n_cosmic << std::endl;
 			while (n_cosmic > 0) {
-				CH->index =(int)_digitizer->generator.Uniform(CH->NumEntries);
+				CH->index +=1;
 				if (CH->Next() < 0) {
 					CH->index = 0;// for now, just loop back to start	
 				}
 				CH->LoadEvent();
 				for (int n_hit = 0; n_hit < CH->sim_numhits; n_hit++){
 					physics::sim_hit *current = new physics::sim_hit(CH, &_geometry, n_hit);
-					//if (excludedLayers.size() != 0 && std::find(excludedLayers.begin(), excludedLayers.end(), current->det_id.layerID) 
-					//!= excludedLayers.end()) { 
-						//std::cout << "Layer ID " << current->det_id.layerID << std::endl;
-				//		continue;
-				//	}
+
 					current->index = n_added;
 					CH->sim_hit_type_buf->push_back(1);
 					current->SetType(1);
@@ -181,7 +186,7 @@ int RunManager::StartTracking()
 			}
 			std::vector<physics::digi_hit *> digi_list = _digitizer->Digitize();
 			if (digi_list.size() == 0) {
-				std::cout << "No digis" << std::endl;
+				// std::cout << "No digis" << std::endl;
 			}
 			if (_digitizer->hits.size() == 0) {
 				std::cout << "No sim hits" << std::endl;
@@ -198,7 +203,7 @@ int RunManager::StartTracking()
         		}
 			TH->ExportDigis(digi_list, _digitizer->seed);
 			TH->Fill();
-			std::cout << "Finished Filling" << std::endl;
+			// std::cout << "Finished Filling" << std::endl;
 
 			dropped_hits += _digitizer->dropped_hits;
 			floor_wall_hits += _digitizer->floor_wall_hits;

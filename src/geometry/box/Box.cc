@@ -92,7 +92,7 @@ constexpr auto shelf_y_edge_length = 9.0*m;
 constexpr auto steel_height = 0.03*m;
 
 constexpr auto air_gap = 16*m; // Height of hole to be placed in ground
-constexpr auto air_gap_displacement = 9.5*m; // displement of hole to be placed in ground
+constexpr auto air_gap_displacement = 0; //9.5*m; // displement of hole to be placed in ground
 
 constexpr auto air_gap_decay = 10.968*m; // height of decay volume
 
@@ -722,11 +722,25 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
     _scintillators.push_back(hermetic_wall2);
     hermetic_wall2->PlaceIn(DetectorVolume, G4Translate3D(-0.5L*x_edge_length - 1.5L*full_layer_height - wall_gap - wall_gap2, 0.0, half_detector_height -  0.5L*wall_height));
      
+	// Steel plate at the bottom of detector
     _steel = Construction::BoxVolume("SteelPlate",
 			 x_edge_length, y_edge_length, steel_height,
 			 Construction::Material::Iron,
 			 Construction::CasingAttributes());
 	Construction::PlaceVolume(_steel, DetectorVolume, Construction::Transform(0.0, 0.0, half_detector_height - 0.5*steel_height));
+
+	// Tom 2024-08-30: add a steel plate for roof. It will affect the cosmic background
+	// Steel plate at the top of detector
+	// * Size is the detector size expanded by 10 m, 
+	// * Thickness is assumed to be 0.6 cm
+	// * Placed 2m above the full detector
+    auto _steel_roof = Construction::BoxVolume("SteelPlateRoof",
+			 x_edge_length+10*m, y_edge_length+10*m, 0.006*m,
+			 Construction::Material::Iron,
+			 Construction::CasingAttributes());
+	Construction::PlaceVolume(_steel_roof, world, Construction::Transform(0.5L*x_edge_length + x_displacement, 
+														 0.5L*y_edge_length + y_displacement, 
+														 -(full_detector_height + 2*m)));
 
 
 	return Construction::PlaceVolume(DetectorVolume, world,

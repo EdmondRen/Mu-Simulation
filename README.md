@@ -38,6 +38,7 @@ The simulation executable itself comes with several configuration parameters:
 | Non-Random Five Body Decays       | `-n` | `--non_random`      |
 | Debug Mode (write out step files)  | `-D`             | `--debug`            |
 | Quiet Mode            | `-q`             | `--quiet`           |
+| Export Geometry       | `-E <directory>` |                     |
 | Help                  | `-h`             | `--help`            |
 
 Note: The Five Body Muon Decays option will only save tracks with a five-body decay in a certain zone in the detector. Be sure this is what you want.

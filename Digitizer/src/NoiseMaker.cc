@@ -31,7 +31,7 @@ void NoiseMaker::preDigitizer(GeometryHandler* _geometry){
 	Geometry = _geometry;
 	hndlr.Handle();
 	double noise_hz = hndlr.par_map["noise_hz"];
-	//window = hndlr.par_map["noise_window"];
+	window = hndlr.par_map["noise_window"];
 	if(noise_hz>0){
 		run = true;
 		hits_per_second = noise_hz;
@@ -95,7 +95,7 @@ std::vector<double> hit_times;
 
 while(hit_r>0){
         bool add_hit = false;
-        double current_time = hit_generator.Uniform(window);
+        double current_time = hit_generator.Uniform(-window, window);
         if(hit_times.size() !=0){
                 for(double previous_time:hit_times){
                         double difference = previous_time - current_time;

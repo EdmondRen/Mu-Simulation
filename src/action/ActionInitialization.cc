@@ -37,7 +37,7 @@ ActionInitialization::ActionInitialization(const std::string& generator,
     : G4VUserActionInitialization() {
   _generator = generator;
   _data_dir = data_dir;
-  ActionInitialization::Debug=debug;
+  Debug=debug;
 }
 //----------------------------------------------------------------------------------------------
 

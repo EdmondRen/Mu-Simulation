@@ -26,6 +26,7 @@ public:
 	}
 
 	int LoadEvent(){
+		Flush();
 		if (InputTree == nullptr) return -1;
 		InputTree->GetEvent(index);
 		AddEvent();
