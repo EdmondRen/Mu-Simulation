@@ -22,6 +22,7 @@ G4ThreadLocal G4Allocator<Hit>* HitAllocator = nullptr;
 Hit::Hit(const G4ParticleDefinition* particle,
          const int track,
          const int parent,
+         const int parentPDG,
          const double center1,
 		 const double center2,
 		 const int bar_direction,
@@ -33,6 +34,7 @@ Hit::Hit(const G4ParticleDefinition* particle,
 	_particle = particle;
 	_trackID = track;
 	_parentID = parent;
+	_parentPDG = parentPDG;
 	_center1 = center1;
 	_center2 = center2;
 	_bar_direction = bar_direction;
@@ -180,7 +182,7 @@ namespace { ////////////////////////////////////////////////////////////////////
 template<class NameMap>
 const Analysis::ROOT::DataEntryList _convert_to_analysis(const HitCollection* collection,
                                                          NameMap name_map) {
-  constexpr const std::size_t column_count = 18UL;
+  constexpr const std::size_t column_count = 19UL;
 
   Analysis::ROOT::DataEntryList out;
   out.reserve(column_count);
@@ -210,6 +212,7 @@ const auto size = collection->GetSize(); for (std::size_t i = 0; i < column_coun
     out[15].push_back(hit->GetMomentum().py());
     out[16].push_back(hit->GetMomentum().pz());
     out[17].push_back(1);
+    out[18].push_back(hit->GetParentPDG());
   }
 
   return out;

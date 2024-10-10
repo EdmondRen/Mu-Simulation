@@ -79,11 +79,13 @@ int RunManager::StartTracking()
 
 	if (cosmic){
 		// Start at a random point in the cosmic file
-		CH->index =(int)_digitizer->generator.Uniform(CH->NumEntries);
+		CH->index = 0;//(int)_digitizer->generator.Uniform(CH->NumEntries);
 		if (CH->Next() < 0) {
 			CH->index = 0;// for now, just loop back to start	
 		}			
 	}
+	
+	std::cout << "Total number of events " << TH->NumEntries << std::endl;
 	
 	while (TH->Next() >= 0)
 	{
@@ -150,6 +152,8 @@ int RunManager::StartTracking()
 					CH->index = 0;// for now, just loop back to start	
 				}
 				CH->LoadEvent();
+				TH->sim_cosmic_e_buf->push_back((*CH->sim_GenParticle_energy_buf)[1]);
+				TH->sim_cosmic_pid_buf->push_back((*CH->sim_GenParticle_pdgid_buf)[1]);
 				for (int n_hit = 0; n_hit < CH->sim_numhits; n_hit++){
 					physics::sim_hit *current = new physics::sim_hit(CH, &_geometry, n_hit);
 

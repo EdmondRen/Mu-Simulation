@@ -218,7 +218,7 @@ static const DataKeyList DefaultDataKeyList{
   "Hit_particlePdgId", "Hit_G4TrackId", "Hit_G4ParentTrackId",
   "Hit_x", "Hit_y", "Hit_z",
   "Hit_particleEnergy", "Hit_particlePx", "Hit_particlePy", "Hit_particlePz",
-  "Hit_weight",
+  "Hit_weight", "Hit_G4ParentPdgId",
 
   "NumGenParticles",
 
@@ -248,6 +248,7 @@ static const DataKeyTypeList DefaultDataKeyTypeList{
   DataKeyType::Single,
   DataKeyType::Single,
   
+  DataKeyType::Vector,
   DataKeyType::Vector,
   DataKeyType::Vector,
   DataKeyType::Vector,

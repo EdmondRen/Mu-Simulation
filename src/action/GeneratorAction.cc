@@ -102,9 +102,9 @@ GeneratorAction::GeneratorAction(const std::string& generator)
 
 //__Create Initial Vertex_______________________________________________________________________
 void GeneratorAction::GeneratePrimaries(G4Event* event) {
-  std::cout << "GenAction start" << std::endl;
+  //std::cout << "GenAction start" << std::endl;
   _gen->GeneratePrimaryVertex(event);
-  std::cout << "GenAction end" << std::endl;
+  //std::cout << "GenAction end" << std::endl;
 }
 //----------------------------------------------------------------------------------------------
 

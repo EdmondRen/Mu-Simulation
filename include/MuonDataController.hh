@@ -33,7 +33,9 @@ public:
     virtual G4bool getDecayInZone();
     virtual void setDecayInZone(G4bool);
     virtual G4int getEventsWithDecay();
-    virtual void incrementEventsWithDecay(G4int);        
+    virtual void incrementEventsWithDecay(G4int);      
+
+    std::map<int, int>  trackid_pdgid_map;
 private:
    //static instance of the MuonDataController
    static MuonDataController* sController;

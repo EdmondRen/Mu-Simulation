@@ -34,7 +34,7 @@ public:
 	}
 
 	void Fill(){
-		OutputFile->cd();
+		//OutputFile->cd();
 		gROOT->cd();
 		InputTree->GetEvent(index);
 		OutputTree->Fill();
@@ -148,6 +148,8 @@ public:
  		sim_hit_pz_buf 					= TH->sim_hit_pz_buf;
 
 		sim_hit_type_buf				= TH->sim_hit_type_buf;
+		sim_cosmic_e_buf				= TH->sim_cosmic_e_buf;
+		sim_cosmic_pid_buf				= TH->sim_cosmic_pid_buf;
 
  		sim_GenParticle_index_buf 		= TH->sim_GenParticle_index_buf;
  		sim_GenParticle_G4index_buf 	= TH->sim_GenParticle_G4index_buf;
@@ -262,6 +264,8 @@ public:
 		OutputTree->Branch("Hit_particlePz", "std::vector<double>", &sim_hit_pz_buf);
 
 		OutputTree->Branch("Hit_type", "std::vector<int>", &sim_hit_type_buf);
+		OutputTree->Branch("Cosmic_energy", "std::vector<double>", &sim_cosmic_e_buf);
+		OutputTree->Branch("Cosmic_pdgid", "std::vector<int>", &sim_cosmic_pid_buf);
  
 		OutputTree->Branch("Digi_numHits", &Digi_numHits);
 		OutputTree->Branch("Digi_time", &digi_hit_t);
@@ -386,6 +390,8 @@ public:
  	std::vector<double> *sim_hit_pz_buf = nullptr;
 
 	std::vector<int> 	*sim_hit_type_buf = nullptr;
+	std::vector<double> 	*sim_cosmic_e_buf = nullptr;
+	std::vector<int> 	*sim_cosmic_pid_buf = nullptr;
 
  	std::vector<double> *sim_GenParticle_index_buf = nullptr;
  	std::vector<double> *sim_GenParticle_G4index_buf = nullptr;
@@ -457,6 +463,8 @@ public:
 		sim_hit_py_buf->clear();
 		sim_hit_pz_buf->clear();
 		sim_hit_type_buf->clear();
+		sim_cosmic_e_buf->clear();
+		sim_cosmic_pid_buf->clear();
 		sim_GenParticle_index_buf->clear();
 		sim_GenParticle_G4index_buf->clear();
 		sim_GenParticle_pdgid_buf->clear();

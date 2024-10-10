@@ -302,20 +302,20 @@ Detector::Detector() : G4VSensitiveDetector("MATHUSLA/MU/Box") {
 
 //__Detector Constructor________________________________________________________________________
 void Detector::SaveInfo(std::string & prefix){
-  //open file for writing
-  std::cout<<"Save infomration at: "<< prefix+"_SimInfo.txt" <<std::endl;
-  std::ofstream fw(prefix+"_SimInfo.txt", std::ofstream::out);
+//   //open file for writing
+//   std::cout<<"Save infomration at: "<< prefix+"_SimInfo.txt" <<std::endl;
+//   std::ofstream fw(prefix+"_SimInfo.txt", std::ofstream::out);
 
-  //check if file was successfully opened for writing
-  if (fw.is_open())
-  {
-    //store array contents to text fill
-    for (auto& layer_y : layer_z_world)
-      fw<< '[' << (-layer_y+Box_IP_Depth+scintillator_casing_thickness)/Units::Length << ", "<<  (-layer_y+Box_IP_Depth+scintillator_casing_thickness+scintillator_height)/Units::Length<< "]\n";
-    fw.close();
-  }
-  else std::cout << "Problem with opening file";
-  fw.close();  
+//   //check if file was successfully opened for writing
+//   if (fw.is_open())
+//   {
+//     //store array contents to text fill
+//     for (auto& layer_y : layer_z_world)
+//       fw<< '[' << (-layer_y+Box_IP_Depth+scintillator_casing_thickness)/Units::Length << ", "<<  (-layer_y+Box_IP_Depth+scintillator_casing_thickness+scintillator_height)/Units::Length<< "]\n";
+//     fw.close();
+//   }
+//   else std::cout << "Problem with opening file";
+//   fw.close();  
 }
 
 //----------------------------------------------------------------------------------------------
@@ -521,6 +521,7 @@ G4bool Detector::ProcessHits(G4Step* step, G4TouchableHistory*) {
     particle,
     trackID,
     parentID,
+    0,
 	center1 / Units::Length,
 	center2 / Units::Length,
 	bar_direction,
@@ -552,6 +553,31 @@ void Detector::EndOfEvent(G4HCofThisEvent*) {
      G4cout<<"Decay in zone is true"<<G4endl;
     }
  
+  // Tom 2024-10-10: Obtain the PDG ID of parent particle
+  // First, add primary particles to the <trackID, pdg> map
+  auto evt = G4RunManager::GetRunManager()->GetCurrentEvent();
+  for(std::size_t i=0; i< evt->GetNumberOfPrimaryVertex(); i++){
+	G4PrimaryParticle* particle = evt->GetPrimaryVertex(i)->GetPrimary();
+	int trackid = particle->GetTrackID();
+	int pdgid = particle->GetPDGcode();
+	controller->trackid_pdgid_map.insert({trackid, pdgid});
+	// std::cout <<"  primary track "<< trackid <<  " " << pdgid << std::endl;
+  }
+  for (std::size_t i = 0; i < _hit_collection->GetSize(); ++i) {
+    const auto hit = dynamic_cast<Tracking::Hit*>(_hit_collection->GetHit(i));
+	int parentID = hit->GetParentID();
+	int parentPDG = 0;
+	if (controller->trackid_pdgid_map.find(parentID) != controller->trackid_pdgid_map.end()) {
+		parentPDG = controller->trackid_pdgid_map.at(parentID);
+	}
+	else{
+		// std::cout <<"  track not found "<< parentID  << std::endl;
+	}
+	hit->SetParentPDG(parentPDG);
+  }
+	controller->trackid_pdgid_map.clear();
+
+
   const auto collection_data = Tracking::ConvertToAnalysis(_hit_collection);
   const auto event_id = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
 

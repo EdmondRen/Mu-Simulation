@@ -57,6 +57,7 @@ public:
 	Hit(const G4ParticleDefinition* particle,
       const int track,
       const int parent,
+      const int parentPDG,
 	  const double center1,
 	  const double center2,
 	  const int bar_direction,
@@ -74,6 +75,8 @@ public:
   int                    GetPDGEncoding()  const { return _particle->GetPDGEncoding();  }
   int                    GetTrackID()      const { return _trackID;                     }
   int                    GetParentID()     const { return _parentID;                    }
+  int                    GetParentPDG()     const { return _parentPDG;                    }
+  void                    SetParentPDG(const int parentPDG)     { _parentPDG = parentPDG;                    }
   double 				 GetCenter1()	   const { return _center1;						}
   double 				 GetCenter2()	   const { return _center2;						}
   int 				 	 GetBarDirection() const { return _bar_direction;               }
@@ -101,6 +104,7 @@ private:
   int _event_id;
   int _trackID;
   int _parentID;
+  int _parentPDG;
   double _center1;
   double _center2;
   int _bar_direction;

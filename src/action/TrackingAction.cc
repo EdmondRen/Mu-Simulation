@@ -65,6 +65,12 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
 void TrackingAction::PostUserTrackingAction(const G4Track* track)
 {
 MuonDataController* controller = MuonDataController::getMuonDataController();
+
+// Tom: Use the controller to save parent particle information.
+int pdgid = track->GetParticleDefinition()->GetPDGEncoding();
+int trackid =  track->GetTrackID();
+controller->trackid_pdgid_map.insert({trackid, pdgid});
+
 if(!(controller->getOn())){return;}
 
    auto ParticleType=track->GetParticleDefinition()->GetPDGEncoding();

@@ -39,11 +39,14 @@ EventAction::EventAction(const size_t print_modulo) : G4UserEventAction() {
 //__Event Initialization________________________________________________________________________
 void EventAction::BeginOfEventAction(const G4Event* event) {
   _event_id = event->GetEventID();
-  std::cout << "\r  Event [ "
-             + std::to_string(_event_id)
-             + " ] @ ("
-             + std::to_string(event->GetNumberOfPrimaryVertex()) + " primaries)"
-             + (!(_event_id % _print_modulo) ? "\n\n" : "");
+//  std::cout << "\r  Event [ "
+//             + std::to_string(_event_id)
+//             + " ] @ ("
+//             + std::to_string(event->GetNumberOfPrimaryVertex()) + " primaries)"
+//             + (!(_event_id % _print_modulo) ? "\n\n" : "");
+  
+  if (_event_id % _print_modulo ==0)
+  	std::cout << "\rEvt" + std::to_string(_event_id) + ":" +  std::to_string(event->GetNumberOfPrimaryVertex()) + " " << std::endl;
 
   if (ActionInitialization::Debug) StepDataStore::Initialize(_event_id);
   
