@@ -26,6 +26,13 @@ find_package(Geant4  REQUIRED gdml ui_all vis_all)
 find_package(Pythia8 REQUIRED)
 find_package(ROOT    REQUIRED)
 
+#----------------------------------------------------------------------------
+# Find CRY package
+find_library(CRY NAMES CRY PATHS ${PROJECT_SOURCE_DIR}/cry_v1.7/lib NO_DEFAULT_PATH )
+set(CRY_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/cry_v1.7/src)
+set(CRY_LIBRARIES ${PROJECT_SOURCE_DIR}/cry_v1.7/lib/libCRY.a)
+MESSAGE ("CRY installed at: " ${CRY_INCLUDE_DIRS} )
+
 include(${Geant4_USE_FILE})
 
 add_library(mu-simulation-lib SHARED
@@ -73,6 +80,7 @@ add_library(mu-simulation-lib SHARED
     src/physics/PythiaGenerator.cc
     src/physics/RangeGenerator.cc
     src/physics/PolarGenerator.cc
+    src/physics/MuCRYGenerator.cc
 
     src/util/command_line_parser.cc
 )
@@ -81,7 +89,10 @@ target_link_libraries(mu-simulation-lib PUBLIC
     ${Geant4_LIBRARIES}
     #${HEPMC_LIBRARIES}
     ${PYTHIA8_LIBRARY}
-    ${ROOT_LIBRARIES})
+    ${ROOT_LIBRARIES}
+    )
+
+include_directories(${CRY_INCLUDE_DIRS})    
 
 target_include_directories(mu-simulation-lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
@@ -93,10 +104,10 @@ target_include_directories(mu-simulation-lib SYSTEM PUBLIC
     ${PYTHIA8_INCLUDE_DIR})
 
 add_executable(simulation src/simulation.cc)
-target_link_libraries(simulation PUBLIC mu-simulation-lib)
+target_link_libraries(simulation PUBLIC mu-simulation-lib ${CRY_LIBRARIES})
 
 add_executable(dump_geometry src/dump_geometry.cc)
-target_link_libraries(dump_geometry PUBLIC mu-simulation-lib)
+target_link_libraries(dump_geometry PUBLIC mu-simulation-lib ${CRY_LIBRARIES})
 
 install(DIRECTORY scripts DESTINATION bin/MATHUSLA USE_SOURCE_PERMISSIONS)
 install(TARGETS simulation dump_geometry DESTINATION bin/MATHUSLA)

@@ -78,6 +78,7 @@ public:
  		InputTree->SetBranchAddress("Hit_particlePdgId", &sim_hit_particlePdgId);
  		InputTree->SetBranchAddress("Hit_G4TrackId", &sim_hit_G4TrackId);
  		InputTree->SetBranchAddress("Hit_G4ParentTrackId", &sim_hit_G4ParentTrackId);
+ 		InputTree->SetBranchAddress("Hit_G4ParentPdgId", &sim_hit_G4ParentPdgId);
  		InputTree->SetBranchAddress("Hit_x", &sim_hit_x);
  		InputTree->SetBranchAddress("Hit_y", &sim_hit_y);
  		InputTree->SetBranchAddress("Hit_z", &sim_hit_z);
@@ -139,6 +140,7 @@ public:
  		sim_hit_particlePdgId_buf 		= TH->sim_hit_particlePdgId_buf;
  		sim_hit_G4TrackId_buf 			= TH->sim_hit_G4TrackId_buf;
  		sim_hit_G4ParentTrackId_buf 	= TH->sim_hit_G4ParentTrackId_buf;
+ 		sim_hit_G4ParentPdgId_buf 		= TH->sim_hit_G4ParentPdgId_buf;
  		sim_hit_x_buf 					= TH->sim_hit_x_buf;
  		sim_hit_y_buf 					= TH->sim_hit_y_buf;
  		sim_hit_z_buf 					= TH->sim_hit_z_buf;
@@ -191,6 +193,7 @@ public:
  		InputTree->SetBranchAddress("Hit_particlePdgId", &sim_hit_particlePdgId);
  		InputTree->SetBranchAddress("Hit_G4TrackId", &sim_hit_G4TrackId);
  		InputTree->SetBranchAddress("Hit_G4ParentTrackId", &sim_hit_G4ParentTrackId);
+ 		InputTree->SetBranchAddress("Hit_G4ParentPdgId", &sim_hit_G4ParentPdgId);
  		InputTree->SetBranchAddress("Hit_x", &sim_hit_x);
  		InputTree->SetBranchAddress("Hit_y", &sim_hit_y);
  		InputTree->SetBranchAddress("Hit_z", &sim_hit_z);
@@ -255,6 +258,7 @@ public:
  		OutputTree->Branch("Hit_particlePdgId", "std::vector<double>", &sim_hit_particlePdgId_buf);
  		OutputTree->Branch("Hit_G4TrackId", "std::vector<double>", &sim_hit_G4TrackId_buf);
  		OutputTree->Branch("Hit_G4ParentTrackId", "std::vector<double>", &sim_hit_G4ParentTrackId_buf);
+ 		OutputTree->Branch("Hit_G4ParentPdgId", "std::vector<double>", &sim_hit_G4ParentPdgId_buf);
  		OutputTree->Branch("Hit_x", "std::vector<double>", &sim_hit_x_buf);
  		OutputTree->Branch("Hit_y", "std::vector<double>", &sim_hit_y_buf);
  		OutputTree->Branch("Hit_z", "std::vector<double>", &sim_hit_z_buf);
@@ -318,6 +322,7 @@ public:
  	std::vector<double> *sim_hit_particlePdgId = nullptr;
  	std::vector<double> *sim_hit_G4TrackId = nullptr;
  	std::vector<double> *sim_hit_G4ParentTrackId = nullptr;
+ 	std::vector<double> *sim_hit_G4ParentPdgId = nullptr;
  	std::vector<double> *sim_hit_x = nullptr;
  	std::vector<double> *sim_hit_y = nullptr;
  	std::vector<double> *sim_hit_z = nullptr;
@@ -381,6 +386,7 @@ public:
  	std::vector<double> *sim_hit_particlePdgId_buf = nullptr;
  	std::vector<double> *sim_hit_G4TrackId_buf = nullptr;
  	std::vector<double> *sim_hit_G4ParentTrackId_buf = nullptr;
+ 	std::vector<double> *sim_hit_G4ParentPdgId_buf = nullptr;
  	std::vector<double> *sim_hit_x_buf = nullptr;
  	std::vector<double> *sim_hit_y_buf = nullptr;
  	std::vector<double> *sim_hit_z_buf = nullptr;
@@ -422,6 +428,7 @@ public:
 		sim_hit_particlePdgId_buf->insert(sim_hit_particlePdgId_buf->end(), sim_hit_particlePdgId->begin(), sim_hit_particlePdgId->end());
 		sim_hit_G4TrackId_buf->insert(sim_hit_G4TrackId_buf->end(), sim_hit_G4TrackId->begin(), sim_hit_G4TrackId->end());
 		sim_hit_G4ParentTrackId_buf->insert(sim_hit_G4ParentTrackId_buf->end(), sim_hit_G4ParentTrackId->begin(), sim_hit_G4ParentTrackId->end());
+		sim_hit_G4ParentPdgId_buf->insert(sim_hit_G4ParentPdgId_buf->end(), sim_hit_G4ParentPdgId->begin(), sim_hit_G4ParentPdgId->end());
 		sim_hit_x_buf->insert(sim_hit_x_buf->end(), sim_hit_x->begin(), sim_hit_x->end());
 		sim_hit_y_buf->insert(sim_hit_y_buf->end(), sim_hit_y->begin(), sim_hit_y->end());
 		sim_hit_z_buf->insert(sim_hit_z_buf->end(), sim_hit_z->begin(), sim_hit_z->end());
@@ -455,6 +462,7 @@ public:
 		sim_hit_particlePdgId_buf->clear();
 		sim_hit_G4TrackId_buf->clear();
 		sim_hit_G4ParentTrackId_buf->clear();
+		sim_hit_G4ParentPdgId_buf->clear();
 		sim_hit_x_buf->clear();
 		sim_hit_y_buf->clear();
 		sim_hit_z_buf->clear();

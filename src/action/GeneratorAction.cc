@@ -29,6 +29,7 @@
 //#include "physics/PolarGenerator.hh"
 #include "physics/HepMCGenerator.hh"
 #include "physics/Units.hh"
+#include "physics/MuCRYGenerator.hh"
 
 namespace MATHUSLA { namespace MU {
 
@@ -71,6 +72,9 @@ GeneratorAction::GeneratorAction(const std::string& generator)
           "24:onMode = off",
           "24:onIfAny = 13"
       });
+
+  _gen_map["cry"] = new Physics::MuCRYGenerator(
+      "cry", "CRY cosmic Generator.");      
 
   
 

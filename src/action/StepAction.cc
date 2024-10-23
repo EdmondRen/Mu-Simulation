@@ -78,60 +78,61 @@ StepAction::StepAction() : G4UserSteppingAction() {
 
 void StepAction::UserSteppingAction( const G4Step* step){
   
+  if (ActionInitialization::Debug) {
+    const auto step_point = step->GetPreStepPoint();
+    const auto post_step_point = step->GetPostStepPoint();
+    const auto position   = G4LorentzVector(step_point->GetGlobalTime(), step_point->GetPosition());
+    const auto position_end   = G4LorentzVector(post_step_point->GetGlobalTime(), post_step_point->GetPosition());
+    const auto momentum   = G4LorentzVector(step_point->GetTotalEnergy(), step_point->GetMomentum());
 
-  const auto step_point = step->GetPreStepPoint();
-  const auto post_step_point = step->GetPostStepPoint();
-  const auto position   = G4LorentzVector(step_point->GetGlobalTime(), step_point->GetPosition());
-  const auto position_end   = G4LorentzVector(post_step_point->GetGlobalTime(), post_step_point->GetPosition());
-  const auto momentum   = G4LorentzVector(step_point->GetTotalEnergy(), step_point->GetMomentum());
+    auto pdg = step->GetTrack()->GetParticleDefinition()->GetPDGEncoding();
 
-  auto pdg = step->GetTrack()->GetParticleDefinition()->GetPDGEncoding();
+    // Check if it is KL/KS, or the secondaries contains KL/KS
+    std::set<int> KL_pdgIDs {130, 310, 311, -311};
+    bool is_KLKS=false;
+    bool is_KLKS_secondary=false;
 
-  // Check if it is KL/KS, or the secondaries contains KL/KS
-  std::set<int> KL_pdgIDs {130, 310, 311, -311};
-  bool is_KLKS=false;
-  bool is_KLKS_secondary=false;
-
-  if(KL_pdgIDs.count(pdg) != 0){
-    is_KLKS = true;
-  }
-  auto secondary = step->GetSecondaryInCurrentStep();
-  size_t size_secondary = secondary->size();
-  if (size_secondary){
-    for (size_t i=0; i<(size_secondary);i++){
-      auto secstep = (*secondary)[i];
-      int particle_pdg = secstep->GetParticleDefinition()->GetPDGEncoding();
-      if(KL_pdgIDs.count(particle_pdg) != 0)
-        is_KLKS_secondary=true;
+    if(KL_pdgIDs.count(pdg) != 0){
+      is_KLKS = true;
     }
-  }   
-  if (!(is_KLKS || is_KLKS_secondary))
-    return;
+    auto secondary = step->GetSecondaryInCurrentStep();
+    size_t size_secondary = secondary->size();
+    if (size_secondary){
+      for (size_t i=0; i<(size_secondary);i++){
+        auto secstep = (*secondary)[i];
+        int particle_pdg = secstep->GetParticleDefinition()->GetPDGEncoding();
+        if(KL_pdgIDs.count(particle_pdg) != 0)
+          is_KLKS_secondary=true;
+      }
+    }   
+    if (!(is_KLKS || is_KLKS_secondary))
+      return;
 
-  StepAction::step_data_valid = true;
+    StepAction::step_data_valid = true;
 
-  StepDataStore::_step_x = position.x();
-  StepDataStore::_step_y = position.y();
-  StepDataStore::_step_z = position.z();
-  StepDataStore::_step_x_end = position_end.x();
-  StepDataStore::_step_y_end = position_end.y();
-  StepDataStore::_step_z_end = position_end.z();  
+    StepDataStore::_step_x = position.x();
+    StepDataStore::_step_y = position.y();
+    StepDataStore::_step_z = position.z();
+    StepDataStore::_step_x_end = position_end.x();
+    StepDataStore::_step_y_end = position_end.y();
+    StepDataStore::_step_z_end = position_end.z();  
 
-  StepDataStore::_step_px = momentum.x();
-  StepDataStore::_step_py = momentum.y();
-  StepDataStore::_step_pz = momentum.z();
+    StepDataStore::_step_px = momentum.x();
+    StepDataStore::_step_py = momentum.y();
+    StepDataStore::_step_pz = momentum.z();
 
-  StepDataStore::_deposit = step->GetTotalEnergyDeposit();
+    StepDataStore::_deposit = step->GetTotalEnergyDeposit();
 
-  StepDataStore::_energy_loss = step_point->GetKineticEnergy() - post_step_point->GetKineticEnergy();
+    StepDataStore::_energy_loss = step_point->GetKineticEnergy() - post_step_point->GetKineticEnergy();
 
-  StepDataStore::_pdg = step->GetTrack()->GetParticleDefinition()->GetPDGEncoding();
-  StepDataStore::_trackid = step->GetTrack()->GetTrackID();
-  StepDataStore::_trackid_parent = step->GetTrack()->GetParentID();
-  StepDataStore::_trackid_status = step->GetTrack()->GetTrackStatus();
+    StepDataStore::_pdg = step->GetTrack()->GetParticleDefinition()->GetPDGEncoding();
+    StepDataStore::_trackid = step->GetTrack()->GetTrackID();
+    StepDataStore::_trackid_parent = step->GetTrack()->GetParentID();
+    StepDataStore::_trackid_status = step->GetTrack()->GetTrackStatus();
 
-  StepDataStore::_material_index = step_point->GetMaterial()->GetIndex();
-  _step_data->Fill();
+    StepDataStore::_material_index = step_point->GetMaterial()->GetIndex();
+    _step_data->Fill();
+  }
 
 }
 
