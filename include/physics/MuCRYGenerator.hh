@@ -57,6 +57,8 @@ class MuCRYGenerator : public Generator {
 
         // Keep track of generated particles in the last events
         std::vector<Particle> gen_particles_prev;
+        
+        Command::StringArg *_ui_pathname;
 
     };
 

@@ -105,10 +105,12 @@ namespace MATHUSLA { namespace MU { namespace Physics {
 
         CRYSetup *cry_setup = new CRYSetup(cry_setupString, "cry_v1.7/data");
         // Set random number generator to use GEANT4 engine
-        // RNGWrapper<CLHEP::HepRandomEngine>::set(CLHEP::HepRandom::getTheEngine(), &CLHEP::HepRandomEngine::flat);
-        // cry_setup->setRandomFunction(RNGWrapper<CLHEP::HepRandomEngine>::rng);        
+        RNGWrapper<CLHEP::HepRandomEngine>::set(CLHEP::HepRandom::getTheEngine(), &CLHEP::HepRandomEngine::flat);
+        cry_setup->setRandomFunction(RNGWrapper<CLHEP::HepRandomEngine>::rng);        
         // Make the CRY generator
         this->fCRYgenerator = new CRYGenerator(cry_setup);
+
+
         this->cry_generated = new std::vector<CRYParticle*>; // vector to hold generated particles
         // this->gen_particles_prev = new std::vector<Particle>; // vector to hold generated particles in mathusla particle format.
 
@@ -122,6 +124,12 @@ namespace MATHUSLA { namespace MU { namespace Physics {
         fCRY_additional_setup["offset_z"] = -18 * m;
         fCRY_additional_setup["offset_t_low"] = -1000 * ns;
         fCRY_additional_setup["offset_t_high"] = 1000 * ns;
+
+
+        // Make messenger commands
+        _ui_pathname = CreateCommand<Command::StringArg>("pathname", "Set pathname of CRY parameters file.");
+        _ui_pathname->SetParameterName("pathname", false, false);
+        _ui_pathname->AvailableForStates(G4State_PreInit, G4State_Idle);        
     }
 
     // Core function 1: GeneratePrimaryVertex()
@@ -237,6 +245,19 @@ namespace MATHUSLA { namespace MU { namespace Physics {
     void MuCRYGenerator::SetNewValue(G4UIcommand *command,
                             G4String value)
     {
+        if (command == _ui_pathname){
+            // CRY initialization
+            auto cry_setupString = readFileToString_CRY(value);
+
+            G4cout<<cry_setupString;
+
+            CRYSetup *cry_setup = new CRYSetup(cry_setupString, "cry_v1.7/data");
+            // Set random number generator to use GEANT4 engine
+            RNGWrapper<CLHEP::HepRandomEngine>::set(CLHEP::HepRandom::getTheEngine(), &CLHEP::HepRandomEngine::flat);
+            cry_setup->setRandomFunction(RNGWrapper<CLHEP::HepRandomEngine>::rng);        
+            // Make the CRY generator
+            this->fCRYgenerator = new CRYGenerator(cry_setup);            
+        }
     }
 
 
