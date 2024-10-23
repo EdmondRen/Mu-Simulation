@@ -8,9 +8,11 @@
 /vis/viewer/set/autoRefresh false
 
 /vis/drawVolume
-/vis/viewer/set/viewpointThetaPhi  90. 180.
+/vis/viewer/set/upVector 0. 0. -1.
+/vis/viewer/set/viewpointThetaPhi  93. 80.
 /vis/viewer/set/lightsThetaPhi    180.   0.
-/vis/viewer/zoom 1.4
+/vis/viewer/zoom 30
+/vis/viewer/pan 70 0 m
 
 /vis/scene/add/axes 0 0 0 50 cm
 
@@ -21,7 +23,11 @@
 
 /vis/scene/add/hits
 
-/vis/scene/endOfEventAction accumulate
+/vis/scene/endOfEventAction accumulate 5
 
 /vis/viewer/set/autoRefresh true
 /vis/viewer/flush
+
+
+# Increase the display limit
+/vis/ogl/set/displayListLimit 1000000

@@ -118,11 +118,11 @@ void GeneratorAction::SetNewValue(G4UIcommand* command,
   if (command == _select) {
     SetGenerator(value);
   } else if (command == _list) {
-    std::cout << "Generators: \n";
+    G4cout << "Generators: \n";
     for (const auto& element : _gen_map)
-      std::cout << element.second << "\n";
+      G4cout << element.second << "\n";
   } else if (command == _current) {
-    std::cout << "Current Generator: \n  " << _gen->name() << "\n\n";
+    G4cout << "Current Generator: \n  " << _gen->name() << "\n\n";
   }
 }
 //----------------------------------------------------------------------------------------------

@@ -99,7 +99,7 @@ namespace MATHUSLA { namespace MU { namespace Physics {
 
 
         // CRY initialization
-        auto cry_setupString = readFileToString_CRY("scripts/cry_default.file");
+        auto cry_setupString = readFileToString_CRY("scripts/generators/cry_default.file");
 
         G4cout<<cry_setupString;
 
@@ -183,38 +183,52 @@ namespace MATHUSLA { namespace MU { namespace Physics {
             // Save this particle to list
             _particle.index = 0;
             _particle.id = (*cry_generated)[j]->PDGid();
-            _particle.x = fParticlePosX;
-            _particle.y = fParticlePosY;
-            _particle.z = fParticlePosZ;
+            _particle.x = fParticlePosX + fCRY_additional_setup["offset_x"];
+            _particle.y = fParticlePosY + fCRY_additional_setup["offset_y"];
+            _particle.z = fParticlePosZ + fCRY_additional_setup["offset_z"];
             _particle.px  = fParticleMomentum*fParticleMomentumDirectionU;
             _particle.py  = fParticleMomentum*fParticleMomentumDirectionV;
             _particle.pz  = fParticleMomentum*fParticleMomentumDirectionW;
             _particle.t = fParticleTime;
             gen_particles_prev.push_back(_particle);
 
+            // auto particle = MATHUSLA::MU::Physics::Particle((*cry_generated)[j]->PDGid(), fParticleTime, fParticlePosX, fParticlePosY, fParticlePosX, _particle.px, _particle.py, _particle.pz);
+            // auto particle = MATHUSLA::MU::Physics::Particle((*cry_generated)[j]->PDGid(),0., 89000., 0., -18000., 0.,0., 1800.);
+            // AddParticle(particle, *anEvent);
+            // std::cout << "Particle generated: ";
+
             
-            std::cout << "fParticleDefinition: " << (*cry_generated)[j]->PDGid() << " " << std::endl;
-            std::cout << "fParticleEkin: " << fParticleEkin << " MeV" << std::endl;
-            std::cout << "fParticleMomentum: " << sqrt(fParticleEkin * fParticleEkin + 2 * fParticleEkin * fParticleMass) << " MeV" << std::endl;
-            std::cout << "fParticlePosX: " << fParticlePosX << " m" << std::endl;
-            std::cout << "fParticlePosY: " << fParticlePosY << " m" << std::endl;
-            std::cout << "fParticlePosZ: " << fParticlePosZ << " m" << std::endl;
-            std::cout << "fParticleMomentumDirectionU: " << fParticleMomentumDirectionU << "" << std::endl;
-            std::cout << "fParticleMomentumDirectionV: " << fParticleMomentumDirectionV << "" << std::endl;
-            std::cout << "fParticleMomentumDirectionW: " << fParticleMomentumDirectionW << "" << std::endl;
-            std::cout << "fParticleTime: " << fParticleTime << "" << std::endl;
-            std::cout << std::endl;
+            // std::cout << "fParticleDefinition: " << (*cry_generated)[j]->PDGid() << " " << std::endl;
+            // std::cout << "fParticleEkin: " << fParticleEkin << " MeV" << std::endl;
+            // std::cout << "fParticleMomentum: " << sqrt(fParticleEkin * fParticleEkin + 2 * fParticleEkin * fParticleMass) << " MeV" << std::endl;
+            // std::cout << "fParticlePosX: " << fParticlePosX << " mm" << std::endl;
+            // std::cout << "fParticlePosY: " << fParticlePosY << " mm" << std::endl;
+            // std::cout << "fParticlePosZ: " << fParticlePosZ << " mm" << std::endl;
+            // std::cout << "fParticleMomentumDirectionU: " << fParticleMomentumDirectionU << "" << std::endl;
+            // std::cout << "fParticleMomentumDirectionV: " << fParticleMomentumDirectionV << "" << std::endl;
+            // std::cout << "fParticleMomentumDirectionW: " << fParticleMomentumDirectionW << "" << std::endl;
+            // std::cout << "fParticleTime: " << fParticleTime << "" << std::endl;
+            // std::cout << std::endl;
             
 
-            fParticleGun->SetParticleDefinition(particleDefinition);
-            fParticleGun->SetParticleMomentum(sqrt(fParticleEkin * fParticleEkin + 2 * fParticleEkin * fParticleMass));
-            fParticleGun->SetParticlePosition(G4ThreeVector(fParticlePosX + fCRY_additional_setup["offset_x"],
-                                                            fParticlePosY + fCRY_additional_setup["offset_y"],
-                                                            fParticlePosZ + fCRY_additional_setup["offset_z"]));
-            fParticleGun->SetParticleMomentumDirection(G4ThreeVector(fParticleMomentumDirectionU, fParticleMomentumDirectionV, fParticleMomentumDirectionW));
-            fParticleGun->SetParticleTime(fParticleTime);
-            fParticleGun->GeneratePrimaryVertex(anEvent);
+            // fParticleGun->SetParticleDefinition(particleDefinition);
+            // fParticleGun->SetParticleMomentum(sqrt(fParticleEkin * fParticleEkin + 2 * fParticleEkin * fParticleMass));
+            // fParticleGun->SetParticlePosition(G4ThreeVector(fParticlePosX + fCRY_additional_setup["offset_x"],
+            //                                                 fParticlePosY + fCRY_additional_setup["offset_y"],
+            //                                                 fParticlePosZ + fCRY_additional_setup["offset_z"]));
+
+            // // fParticleGun->SetParticleMomentum(1000);
+            // // fParticleGun->SetParticlePosition(G4ThreeVector(89000., 0, -10000));
+            // fParticleGun->SetParticleMomentumDirection(G4ThreeVector(fParticleMomentumDirectionU, fParticleMomentumDirectionV, fParticleMomentumDirectionW));
+            // fParticleGun->SetParticleTime(fParticleTime);
+            // fParticleGun->GeneratePrimaryVertex(anEvent);
         }
+
+
+        for (std::size_t i{}; i < gen_particles_prev.size(); ++i) {
+            auto particle = gen_particles_prev[i];
+            AddParticle(particle, *anEvent);
+        }          
 
     }
 
@@ -243,7 +257,9 @@ namespace MATHUSLA { namespace MU { namespace Physics {
     }
 
     const Analysis::SimSettingList MuCRYGenerator::GetSpecification() const {
-        
+        return Analysis::Settings(SimSettingPrefix,
+            "",         _name,
+            "_PATHNAME",  "cry");        
     }    
 
 
