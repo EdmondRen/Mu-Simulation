@@ -771,7 +771,7 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 			 Construction::CasingAttributes());
 	Construction::PlaceVolume(_steel, DetectorVolume, Construction::Transform(0.0, 0.0, half_detector_height - 0.5*steel_height));
 
-	// Tom 2024-08-30: add a steel plate for roof. It will affect the cosmic background
+	// Tom 2024-10-30: add a steel plate for roof. It will affect the cosmic background
 	// Steel plate at the top of detector
 	// * Size is the detector size expanded by 10 m, 
 	// * Thickness is assumed to be 0.6 cm
@@ -782,7 +782,44 @@ G4VPhysicalVolume* Detector::Construct(G4LogicalVolume* world) {
 			 Construction::CasingAttributes());
 	Construction::PlaceVolume(_steel_roof, world, Construction::Transform(0.5L*x_edge_length + x_displacement, 
 														 0.5L*y_edge_length + y_displacement, 
-														 -(full_detector_height + 2*m)));
+														 -(full_detector_height + 2.1*m)));
+
+	double wall_thickness = 20*cm;
+	double wall_additional = 11*m;
+	double wall_x_len = x_edge_length+wall_additional;
+	double wall_y_len = x_edge_length+wall_additional;
+	double wall_z_len = full_detector_height+2.*m;
+
+    auto _concret_roof = Construction::BoxVolume("ConcretPlateRoof",
+			 wall_x_len, wall_y_len, wall_thickness,
+			 Construction::Material::Concrete,
+			 Construction::CasingAttributes());
+	Construction::PlaceVolume(_concret_roof, world, Construction::Transform(0.5L*x_edge_length + x_displacement, 
+														 0.5L*y_edge_length + y_displacement, 
+														 -(full_detector_height + 2*m + 20*cm)));	
+	// Front and wall is towards x
+    auto _concret_wallfront = Construction::BoxVolume("ConcretWallFront",
+			 wall_thickness, wall_y_len, wall_z_len,
+			 Construction::Material::Concrete,
+			 Construction::CasingAttributes());
+	Construction::PlaceVolume(_concret_wallfront, world, Construction::Transform(-0.5*wall_additional + x_displacement, 
+														 0.5L*y_edge_length + y_displacement, 
+														 -0.5*wall_z_len)); 
+	Construction::PlaceVolume(_concret_wallfront, world, Construction::Transform( 0.5*wall_additional + x_edge_length + x_displacement, 
+														 0.5L*y_edge_length + y_displacement, 
+														 -0.5*wall_z_len)); 
+
+	// Front and wall is towards x
+    auto _concret_wallside = Construction::BoxVolume("ConcretWallSide",
+			 wall_x_len,wall_thickness, wall_z_len,
+			 Construction::Material::Concrete,
+			 Construction::CasingAttributes());
+	Construction::PlaceVolume(_concret_wallside, world, Construction::Transform(0.5*x_edge_length + x_displacement, 
+														 -0.5*wall_additional  + y_displacement, 
+														 -0.5*wall_z_len)); 
+	Construction::PlaceVolume(_concret_wallside, world, Construction::Transform(0.5*x_edge_length + x_displacement, 
+														 0.5*wall_additional + y_edge_length + y_displacement, 
+														 -0.5*wall_z_len)); 
 
 
 	return Construction::PlaceVolume(DetectorVolume, world,
