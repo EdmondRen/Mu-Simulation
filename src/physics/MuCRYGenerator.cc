@@ -119,17 +119,33 @@ namespace MATHUSLA { namespace MU { namespace Physics {
         this->fparticleTable = G4ParticleTable::GetParticleTable();
 
         // Initialize Other parameters that is not part of CRY, but are needed to generate particle at correct points
-        fCRY_additional_setup["offset_x"] = 89 * m;
+        fCRY_additional_setup["offset_x"] = 89.5 * m;
         fCRY_additional_setup["offset_y"] = 0 * m;
         fCRY_additional_setup["offset_z"] = -18 * m;
         fCRY_additional_setup["offset_t_low"] = -1000 * ns;
         fCRY_additional_setup["offset_t_high"] = 1000 * ns;
-
+        fCRY_additional_setup["ekin_cut_low"] = 0 * GeV;
+        fCRY_additional_setup["ekin_cut_high"] = 100 * TeV;
 
         // Make messenger commands
-        _ui_pathname = CreateCommand<Command::StringArg>("pathname", "Set pathname of CRY parameters file.");
+        _ui_pathname = CreateCommand<G4UIcmdWithAString>("pathname", "Set pathname of CRY parameters file.");
         _ui_pathname->SetParameterName("pathname", false, false);
-        _ui_pathname->AvailableForStates(G4State_PreInit, G4State_Idle);        
+        _ui_pathname->AvailableForStates(G4State_PreInit, G4State_Idle);
+        _ui_offset = CreateCommand<G4UIcmdWith3VectorAndUnit>("offset", "Set x-y-z offset with unit.");
+        _ui_offset->SetParameterName("offset_x", "offset_y", "offset_z", false, false);
+        _ui_offset->AvailableForStates(G4State_PreInit, G4State_Idle);    
+        _ui_offset_t_low = CreateCommand<G4UIcmdWithADoubleAndUnit>("offset_t_low", "Set time offset range lower bound with unit.");
+        _ui_offset_t_low->SetParameterName("offset_t_low", false, false);
+        _ui_offset_t_low->AvailableForStates(G4State_PreInit, G4State_Idle);
+        _ui_offset_t_high = CreateCommand<G4UIcmdWithADoubleAndUnit>("offset_t_high", "Set time offset range upper bound with unit.");
+        _ui_offset_t_high->SetParameterName("offset_t_high", false, false);
+        _ui_offset_t_high->AvailableForStates(G4State_PreInit, G4State_Idle);
+        _ui_ekin_low = CreateCommand<G4UIcmdWithADoubleAndUnit>("ekin_low", "Set time kinetic energy cut lower bound with unit.");
+        _ui_ekin_low->SetParameterName("ekin_low", false, false);
+        _ui_ekin_low->AvailableForStates(G4State_PreInit, G4State_Idle);
+        _ui_ekin_high = CreateCommand<G4UIcmdWithADoubleAndUnit>("ekin__high", "Set time kinetic energy cut upper bound with unit.");
+        _ui_ekin_high->SetParameterName("ekin_high", false, false);
+        _ui_ekin_high->AvailableForStates(G4State_PreInit, G4State_Idle);                                  
     }
 
     // Core function 1: GeneratePrimaryVertex()
@@ -155,7 +171,7 @@ namespace MATHUSLA { namespace MU { namespace Physics {
                 G4ParticleDefinition *particleDefinition = fparticleTable->FindParticle((*cry_generated)[j]->PDGid());
 
                 double kinEnergy = (*cry_generated)[j]->ke() * MeV;
-                if (kinEnergy >= 2670)
+                if (kinEnergy >= fCRY_additional_setup["ekin_cut_low"] && kinEnergy <= fCRY_additional_setup["ekin_cut_high"] )
                     pass_cuts = true; // 2670
                 else
                     countAttempt++;
@@ -258,6 +274,21 @@ namespace MATHUSLA { namespace MU { namespace Physics {
             // Make the CRY generator
             this->fCRYgenerator = new CRYGenerator(cry_setup);            
         }
+        else if (command == _ui_offset)
+        {
+            auto vec = _ui_offset->GetNew3VectorValue(value);
+            fCRY_additional_setup["offset_x"] = vec[0];
+            fCRY_additional_setup["offset_y"] = vec[1];
+            fCRY_additional_setup["offset_z"] = vec[2];            
+        }
+        else if (command == _ui_offset_t_low)
+            fCRY_additional_setup["offset_t_low"] = _ui_offset_t_low->GetNewDoubleValue(value);
+        else if (command == _ui_offset_t_high)
+            fCRY_additional_setup["offset_t_high"] = _ui_offset_t_high->GetNewDoubleValue(value); 
+        else if (command == _ui_ekin_low)
+            fCRY_additional_setup["ekin_cut_low"] = _ui_ekin_low->GetNewDoubleValue(value);
+        else if (command == _ui_ekin_high)
+            fCRY_additional_setup["ekin_cut_high"] = _ui_ekin_high->GetNewDoubleValue(value);           
     }
 
 
